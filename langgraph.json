@@ -1,0 +1,14 @@
+{
+    "dockerfile_lines": [],
+    "graphs": {
+        "agent_base": "./agents/Agent_base/agent_base.py:graph_builder",
+        "agent_intention": "./agents/Agent_intention/agent_intention.py:graph_builder",
+        "agent_validation": "./agents/Agent_validation/agent_validation.py:graph_builder",
+        "agent_ensemble": "./agents/Agent_ensemble/agent_ensemble.py:graph_builder"
+    },
+    "env": "./.env",
+    "python_version": "3.11",
+    "dependencies": [
+      "."
+    ]
+  }

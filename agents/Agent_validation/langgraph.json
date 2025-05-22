@@ -1,0 +1,11 @@
+{
+    "dockerfile_lines": [],
+    "graphs": {
+        "agente_validation": "./agente_validation.py:graph_builder"
+    },
+    "env": "../.env",
+    "python_version": "3.11",
+    "dependencies": [
+      "."
+    ]
+  }

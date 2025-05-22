@@ -1,0 +1,11 @@
+{
+    "dockerfile_lines": [],
+    "graphs": {
+        "agente_intention": "./agente_intention.py:graph_builder"
+    },
+    "env": "../.env",
+    "python_version": "3.11",
+    "dependencies": [
+      "."
+    ]
+  }
