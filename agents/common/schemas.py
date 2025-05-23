@@ -55,3 +55,9 @@ class PipelineDecisionSchema(BaseModel):
 class QualityDecision(BaseModel):
     justification: str
     decision: Literal["Suficiente", "Insuficiente_Escalar"]
+    
+class RerankSchema(BaseModel):
+    """
+    Schema for the output of the reranking process.
+    """
+    rerank_candidates: List[CandidateSchema] = Field(description="List of candidates after reranking.")

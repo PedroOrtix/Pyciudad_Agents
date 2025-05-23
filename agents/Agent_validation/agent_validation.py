@@ -7,14 +7,14 @@ from langgraph.graph import StateGraph, START, END
 from agents.Agent_base.agent_base import app_base
 
 # Import Pydantic models
-from agents.common.schemas import CartoCiudadQuerySchema, CandidateSchema, ValidationOutput
+from agents.common.schemas import CartoCiudadQuerySchema, CandidateSchema, ValidationOutput, RerankSchema
 
 # Import custom states
 from agents.Agent_validation.states_validation import GraphStateInput, AgentState, GraphStateOutput
 from agents.Agent_base.states_base import GraphStateOutput as AgentBaseGraphStateOutput
 
 # Import prompts
-from agents.Agent_validation.prompt_validation import VALIDATOR_AGENT_REFLEXION_PROMPT, REFORMULATION_AGENT_USING_REFLEXION_PROMPT
+from agents.Agent_validation.prompt_validation import VALIDATOR_AGENT_REFLEXION_PROMPT, REFORMULATION_AGENT_USING_REFLEXION_PROMPT, RERANKER_PROMPT
 
 # Import CartoCiudad tool
 from agents.common.tools import search_cartociudad_tool
@@ -211,14 +211,12 @@ def decide_to_reformulate_or_end(state: AgentState) -> str:
 def finalize_output_node(state: AgentState) -> Dict[str,Any] : # Este es el GraphStateOutput
     print("--- [Agente_2] Running Node: Finalize Output (Current Iteration Candidates) ---")
     # Esta ruta se toma si el validador dijo "Suficiente"
-    final_output_payload = {
+    return {
         "final_candidates": state.get("candidates_current_iteration", []),
         "final_params_used_for_last_call": state.get("current_cartociudad_params"),
         "num_reformulations_done": state.get("reformulation_attempts", 0),
         "max_reformulations_hit_insufficient": False
     }
-    return GraphStateOutput(final_candidates=final_output_payload["final_candidates"], final_cartociudad_params=final_output_payload["final_params_used_for_last_call"])
-
 
 def finalize_output_all_candidates_node(state: AgentState) -> Dict[str,Any] :
     print("--- [Agente_2] Running Node: Finalize Output (All Accumulated Candidates) ---")
@@ -228,13 +226,44 @@ def finalize_output_all_candidates_node(state: AgentState) -> Dict[str,Any] :
     all_cands = state.get("all_candidates_across_iterations", [])
     unique_final_cands = deduplicate_candidates(all_cands)
 
-    final_output_payload = {
+    return {
         "final_candidates": unique_final_cands,
         "final_params_used_for_last_call": state.get("current_cartociudad_params"), # Params de la última llamada
         "num_reformulations_done": state.get("reformulation_attempts", 0),
         "max_reformulations_hit_insufficient": True
     }
-    return GraphStateOutput(final_candidates=final_output_payload["final_candidates"], final_cartociudad_params=final_output_payload["final_params_used_for_last_call"])
+
+def reranker_validation_node(state: AgentState) -> GraphStateOutput:
+    print("--- Running Node: Reranker Intention (Re-ranking candidates) ---")
+    candidates = state["final_candidates_used_for_last_call"] if state.get("max_reformulations_hit_insufficient") else state["candidates_current_iteration"]
+    # Si no se alcanzó el máximo de reformulaciones, usamos los candidatos de la iteración actual
+    query_params = state["current_cartociudad_params"]
+    user_query = state["user_query"]
+
+    if not candidates:
+        print("Reranker Intention: No candidates to rerank.")
+        return GraphStateOutput(final_candidates=[], cartociudad_query_params=query_params)
+
+    candidates_json = [c.model_dump() if hasattr(c, 'model_dump') else dict(c) for c in candidates]
+    # params_json = query_params.model_dump() if hasattr(query_params, 'model_dump') else dict(query_params)
+
+    structured_llm = llm.with_structured_output(RerankSchema)
+    response = structured_llm.invoke([
+        SystemMessage(content=RERANKER_PROMPT),
+        HumanMessage(
+            content=(
+                f"Consulta original del usuario: {user_query}\n"
+                # f"Parámetros utilizados: {params_json}\n"
+                f"Lista de candidatos:\n{candidates_json}\n"
+                "Devuelve la lista reordenada de candidatos en el campo 'rerank_candidates' como una lista de objetos."
+            )
+        )
+    ])
+
+    reranked_candidates = response.rerank_candidates if hasattr(response, 'rerank_candidates') else candidates
+
+    print(f"Reranker Base: Devolviendo {len(reranked_candidates)} candidatos reordenados.")
+    return GraphStateOutput(final_candidates=reranked_candidates, final_cartociudad_params=query_params)
 
 # --- Graph Definition ---
 graph_builder = StateGraph(AgentState, input=GraphStateInput, output=GraphStateOutput)
@@ -244,6 +273,7 @@ graph_builder.add_node("invoke_agente_base", invoke_agente_base_node)
 graph_builder.add_node("validator_agent", validator_agent_with_results_node)
 graph_builder.add_node("reformulater_agent", reformulation_agent_with_results_node)
 graph_builder.add_node("call_api_iterative", call_cartociudad_api_node) # Para las reformulaciones
+graph_builder.add_node("reranker_validation", reranker_validation_node) # Este es el nodo de re-ranking final
 
 # Nodos finales
 graph_builder.add_node("finalize_output", finalize_output_node)
@@ -270,8 +300,10 @@ graph_builder.add_edge("reformulater_agent", "call_api_iterative")
 graph_builder.add_edge("call_api_iterative", "validator_agent")
 
 # Conexiones a END
-graph_builder.add_edge("finalize_output", END)
-graph_builder.add_edge("finalize_output_all", END)
+graph_builder.add_edge("finalize_output", "reranker_validation")
+graph_builder.add_edge("finalize_output_all", "reranker_validation")
+
+graph_builder.add_edge("reranker_validation", END)
 
 # Especificar el schema de salida del grafo
 app_validation = graph_builder.compile()

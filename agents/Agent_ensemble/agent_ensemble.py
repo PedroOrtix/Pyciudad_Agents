@@ -38,7 +38,7 @@ def meta_agent_evaluator_node(state: MainAgentState) -> Dict[str, Any]:
 # Nodes to invoke subgraphs (devuelven resultados de cada pipeline)
 def invoke_pipeline_simple_node(state: MainAgentState) -> Dict[str, Any]:
     print("[MainGraph] > Invoking PIPELINE_SIMPLE (app_base)")
-    subgraph_result = app_base.invoke({"user_query": state["user_query"]})
+    subgraph_result = app_base.invoke({"user_query": state["user_query"], "context_from_meta_evaluator": state["pipeline_justification"]})
     return {
         "final_cartociudad_params": subgraph_result.get("cartociudad_query_params"),
         "candidates": subgraph_result.get("final_candidates", [])
@@ -46,7 +46,7 @@ def invoke_pipeline_simple_node(state: MainAgentState) -> Dict[str, Any]:
 
 def invoke_pipeline_intermedio_node(state: MainAgentState) -> Dict[str, Any]:
     print("[MainGraph] > Invoking PIPELINE_INTERMEDIO (app_intention)")
-    subgraph_result = app_intention.invoke({"user_query": state["user_query"]})
+    subgraph_result = app_intention.invoke({"user_query": state["user_query"], "context_from_meta_evaluator": state["pipeline_justification"]})
     return {
         "final_cartociudad_params": subgraph_result.get("cartociudad_query_params"),
         "candidates": subgraph_result.get("final_candidates", [])
@@ -54,7 +54,7 @@ def invoke_pipeline_intermedio_node(state: MainAgentState) -> Dict[str, Any]:
 
 def invoke_pipeline_complejo_node(state: MainAgentState) -> Dict[str, Any]:
     print("[MainGraph] > Invoking PIPELINE_COMPLEJO (app_validation)")
-    subgraph_result = app_validation.invoke({"user_query": state["user_query"]})
+    subgraph_result = app_validation.invoke({"user_query": state["user_query"], "context_from_meta_evaluator": state["pipeline_justification"]})
     return {
         "final_cartociudad_params": subgraph_result.get("final_cartociudad_params"),
         "candidates": subgraph_result.get("final_candidates", [])
