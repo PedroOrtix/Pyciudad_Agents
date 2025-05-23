@@ -13,7 +13,7 @@ from agents.Agent_ensemble.states_ensemble import MainAgentState
 from agents.Agent_ensemble.prompt_ensemble import META_AGENT_EVALUATOR_PROMPT
 
 # import llms
-from agents.common.llm_config import llm
+from agents.common.llm_config import llm_thinking
 
 # Import the compiled subgraph apps from each agent
 from agents.Agent_base.agent_base import app_base
@@ -24,7 +24,7 @@ from agents.Agent_validation.agent_validation import app_validation
 def meta_agent_evaluator_node(state: MainAgentState) -> Dict[str, Any]:
     print("[MainGraph] > Meta-Agent Evaluator")
     user_query = state["user_query"]
-    structured_llm = llm.with_structured_output(PipelineDecisionSchema)
+    structured_llm = llm_thinking.with_structured_output(PipelineDecisionSchema)
     response = structured_llm.invoke([
         SystemMessage(content=META_AGENT_EVALUATOR_PROMPT),
         HumanMessage(content=f"Consulta del usuario: {user_query}")

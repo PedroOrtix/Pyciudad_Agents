@@ -18,7 +18,7 @@ from agents.Agent_validation.prompt_validation import VALIDATOR_AGENT_REFLEXION_
 
 # Import CartoCiudad tool
 from agents.common.tools import search_cartociudad_tool
-from agents.common.llm_config import llm
+from agents.common.llm_config import llm, llm_thinking
 
 # Import utility function
 from agents.common.utils import deduplicate_candidates
@@ -107,7 +107,7 @@ def validator_agent_with_results_node(state: AgentState) -> Dict[str, Any]:
     candidates_summary_for_llm = [cand.model_dump(include={'address', 'type'}) for cand in candidates_this_iteration[:5]]
     num_candidates = len(candidates_this_iteration)
 
-    structured_llm = llm.with_structured_output(ValidationOutput)
+    structured_llm = llm_thinking.with_structured_output(ValidationOutput)
     response = structured_llm.invoke([
         SystemMessage(content=VALIDATOR_AGENT_REFLEXION_PROMPT),
         HumanMessage(

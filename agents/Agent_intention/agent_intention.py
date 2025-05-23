@@ -14,7 +14,7 @@ from agents.Agent_intention.prompt_intetion import KEYWORD_EXTRACTION_PROMPT, IN
 
 # import cartocidad tool
 from agents.common.tools import search_cartociudad_tool
-from agents.common.llm_config import llm
+from agents.common.llm_config import llm, llm_thinking
 
 # import deduplication utility
 from agents.common.utils import deduplicate_candidates
@@ -35,7 +35,7 @@ def keyword_extraction_node(state: GraphStateInput) -> Dict[str, Any]:
 def intent_detection_node(state: GraphStateInput) -> Dict[str, Any]:
     print("--- Running Node: Intent Detection ---")
     user_query = state.user_query
-    structured_llm = llm.with_structured_output(IntentInfo)
+    structured_llm = llm_thinking.with_structured_output(IntentInfo)
     response = structured_llm.invoke([
         SystemMessage(content=INTENT_DETECTION_PROMPT),
         HumanMessage(content=f"Consulta del usuario: {user_query}")
