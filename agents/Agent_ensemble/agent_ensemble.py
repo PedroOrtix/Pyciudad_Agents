@@ -7,8 +7,10 @@ from langgraph.graph import StateGraph, START, END
 from agents.common.schemas import PipelineDecisionSchema
 
 # Import main state for the meta-agent
-from agents.Agent_ensemble.states_ensemble import MainAgentState, GraphStateOutput
-
+from agents.Agent_ensemble.states_ensemble import MainAgentState, GraphStateOutput, GraphStateInput
+from agents.Agent_base.states_base import GraphStateInput as GraphStateInputBase
+from agents.Agent_intention.states_intention import GraphStateInput as GraphStateInputIntention
+from agents.Agent_validation.states_validation import GraphStateInput as GraphStateInputValidation
 # Import prompts
 from agents.Agent_ensemble.prompt_ensemble import META_AGENT_EVALUATOR_PROMPT
 
@@ -21,9 +23,9 @@ from agents.Agent_intention.agent_intention import app_intention
 from agents.Agent_validation.agent_validation import app_validation
 
 # --- Meta-Agent Graph (Main Graph) ---
-def meta_agent_evaluator_node(state: MainAgentState) -> Dict[str, Any]:
+def meta_agent_evaluator_node(state: GraphStateInput) -> Dict[str, Any]:
     print("[MainGraph] > Meta-Agent Evaluator")
-    user_query = state["user_query"]
+    user_query = state.user_query
     structured_llm = llm_thinking.with_structured_output(PipelineDecisionSchema)
     response = structured_llm.invoke([
         SystemMessage(content=META_AGENT_EVALUATOR_PROMPT),
@@ -36,27 +38,27 @@ def meta_agent_evaluator_node(state: MainAgentState) -> Dict[str, Any]:
     }
 
 # Nodes to invoke subgraphs (devuelven resultados de cada pipeline)
-def invoke_pipeline_simple_node(state: MainAgentState) -> Dict[str, Any]:
+def invoke_pipeline_simple_node(state: GraphStateInputBase) -> Dict[str, Any]:
     print("[MainGraph] > Invoking PIPELINE_SIMPLE (app_base)")
-    subgraph_result = app_base.invoke({"user_query": state["user_query"], "context_from_meta_evaluator": state["pipeline_justification"]})
+    subgraph_result = app_base.invoke({"user_query": state.user_query})
     return {
-        "final_cartociudad_params": subgraph_result.get("cartociudad_query_params"),
+        "final_cartociudad_params": subgraph_result.get("cartociudad_query_params", None),
         "candidates": subgraph_result.get("final_candidates", [])
     }
 
-def invoke_pipeline_intermedio_node(state: MainAgentState) -> Dict[str, Any]:
+def invoke_pipeline_intermedio_node(state: GraphStateInputIntention) -> Dict[str, Any]:
     print("[MainGraph] > Invoking PIPELINE_INTERMEDIO (app_intention)")
-    subgraph_result = app_intention.invoke({"user_query": state["user_query"], "context_from_meta_evaluator": state["pipeline_justification"]})
+    subgraph_result = app_intention.invoke({"user_query": state.user_query})
     return {
-        "final_cartociudad_params": subgraph_result.get("cartociudad_query_params"),
+        "final_cartociudad_params": subgraph_result.get("cartociudad_query_params", None),
         "candidates": subgraph_result.get("final_candidates", [])
     }
 
-def invoke_pipeline_complejo_node(state: MainAgentState) -> Dict[str, Any]:
+def invoke_pipeline_complejo_node(state: GraphStateInputValidation) -> Dict[str, Any]:
     print("[MainGraph] > Invoking PIPELINE_COMPLEJO (app_validation)")
-    subgraph_result = app_validation.invoke({"user_query": state["user_query"], "context_from_meta_evaluator": state["pipeline_justification"]})
+    subgraph_result = app_validation.invoke({"user_query": state.user_query})
     return {
-        "final_cartociudad_params": subgraph_result.get("final_cartociudad_params"),
+        "final_cartociudad_params": subgraph_result.get("final_cartociudad_params", None),
         "candidates": subgraph_result.get("final_candidates", [])
     }
     
@@ -142,7 +144,7 @@ def main_select_pipeline_router(state: MainAgentState) -> str:
     return "invoke_simple" # Fallback
 
 # --- Build the Main Graph ---
-graph_builder = StateGraph(MainAgentState, output=GraphStateOutput)
+graph_builder = StateGraph(MainAgentState, input=GraphStateInput, output=GraphStateOutput)
 
 graph_builder.add_node("meta_evaluator", meta_agent_evaluator_node)
 graph_builder.add_node("invoke_simple", invoke_pipeline_simple_node)

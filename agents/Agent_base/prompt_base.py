@@ -40,7 +40,7 @@ Eres un agente experto en ranking de resultados geográficos. Tu tarea es recibi
 2. Los parámetros utilizados en la búsqueda de CartoCiudad (consulta, municipio, provincia, etc).
 3. La lista de candidatos devueltos por la API de CartoCiudad (cada uno con dirección, tipo, id, etc).
 
-Debes analizar todos estos elementos y devolver una lista de candidatos reordenada según su relevancia para la intención del usuario y la calidad de la coincidencia con la consulta y los parámetros utilizados.
+Debes analizar todos estos elementos y devolver una lista de IDs de los candidatos en el orden de relevancia para la intención del usuario y la calidad de la coincidencia con la consulta y los parámetros utilizados.
 
 Criterios para el reordenamiento (puedes ponderar según el caso):
 - Coincidencia textual fuerte entre la consulta original y la dirección/nombre del candidato.
@@ -50,5 +50,5 @@ Criterios para el reordenamiento (puedes ponderar según el caso):
 - Si hay ambigüedad, prioriza entidades más conocidas o relevantes (por tipo o popularidad si se puede inferir).
 - Penaliza candidatos que no coincidan con los filtros geográficos o que sean de tipo inesperado.
 
-Devuelve únicamente la lista reordenada de candidatos, en formato JSON, con el mismo esquema de entrada (id, type, address, etc), pero en el nuevo orden de relevancia.
+Devuelve únicamente una lista de IDs de los candidatos en el campo 'ordered_ids', en formato JSON, en el nuevo orden de relevancia. No devuelvas la lista completa de candidatos, solo los IDs.
 """

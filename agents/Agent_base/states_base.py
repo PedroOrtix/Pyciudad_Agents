@@ -17,6 +17,7 @@ class AgentState(MessagesState):
     keywords: Optional[List[str]] = Field(default_factory=list, description="Extracted keywords.")
     cartociudad_query_params: Optional[CartoCiudadQuerySchema] = Field(default=None, description="Parameters for CartoCiudad API.")
     candidates: Optional[List[CandidateSchema]] = Field(default_factory=list, description="Candidates found by CartoCiudad.")
+    original_candidates: Optional[List[CandidateSchema]] = Field(default_factory=list, description="Candidatos originales obtenidos de la API, usados para reordenar tras el rerank.")
     context_from_meta_evaluator: Optional[str] = Field(default=None, description="Context information from the meta-evaluator.")
 
 class GraphStateOutput(BaseModel):

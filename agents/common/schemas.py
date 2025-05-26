@@ -48,3 +48,6 @@ class QualityDecision(BaseModel):
     
 class RerankSchema(BaseModel):
     rerank_candidates: List[CandidateSchema] = Field(description="Lista de candidatos tras el reranking.")
+
+class RerankOrderSchema(BaseModel):
+    ordered_ids: List[str] = Field(description="Lista de IDs de candidatos en el orden deseado tras el reranking.")

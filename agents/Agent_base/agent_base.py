@@ -4,7 +4,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 
 # import pydantic models
-from agents.common.schemas import NormalizedQueryKeywords, CartoCiudadQuerySchema, CandidateSchema, RerankSchema
+from agents.common.schemas import NormalizedQueryKeywords, CartoCiudadQuerySchema, CandidateSchema, RerankSchema, RerankOrderSchema
 
 # import custom states
 from agents.Agent_base.states_base import GraphStateInput, AgentState, GraphStateOutput
@@ -17,7 +17,7 @@ from agents.common.tools import search_cartociudad_tool
 from agents.common.llm_config import llm
 
 # import deduplication utility
-from agents.common.utils import deduplicate_candidates
+from agents.common.utils import deduplicate_candidates, reorder_candidates_by_ids
 
 # --- Node Functions ---
 
@@ -109,12 +109,14 @@ def reranker_base_node(state: AgentState) -> GraphStateOutput:
         print("Reranker Base: No candidates to rerank.")
         return GraphStateOutput(final_candidates=[], cartociudad_query_params=query_params)
 
-    # Prepara los datos para el LLM
+    # Guardar los candidatos originales en el estado efímero
+    state["original_candidates"] = candidates.copy()
+
     candidates_json = [c.model_dump() if hasattr(c, 'model_dump') else dict(c) for c in candidates]
     params_json = query_params.model_dump() if hasattr(query_params, 'model_dump') else dict(query_params)
 
-    # Llama al LLM con el prompt de reranking y espera un output estructurado según RerankSchema
-    structured_llm = llm.with_structured_output(RerankSchema)
+    # Llama al LLM con el prompt de reranking y espera un output estructurado según RerankOrderSchema
+    structured_llm = llm.with_structured_output(RerankOrderSchema)
     response = structured_llm.invoke([
         SystemMessage(content=RERANKER_PROMPT),
         HumanMessage(
@@ -122,12 +124,13 @@ def reranker_base_node(state: AgentState) -> GraphStateOutput:
                 f"Consulta original del usuario: {user_query}\n"
                 f"Parámetros utilizados: {params_json}\n"
                 f"Lista de candidatos:\n{candidates_json}\n"
-                "Devuelve la lista reordenada de candidatos en el campo 'rerank_candidates' como una lista de objetos."
+                "Devuelve la lista ordenada de IDs en el campo 'ordered_ids'."
             )
         )
     ])
 
-    reranked_candidates = response.rerank_candidates if hasattr(response, 'rerank_candidates') else candidates
+    ordered_ids = response.ordered_ids if hasattr(response, 'ordered_ids') else [c.id for c in candidates]
+    reranked_candidates = reorder_candidates_by_ids(ordered_ids, state["original_candidates"])
 
     print(f"Reranker Base: Devolviendo {len(reranked_candidates)} candidatos reordenados.")
     return GraphStateOutput(final_candidates=reranked_candidates, cartociudad_query_params=query_params)

@@ -7,7 +7,7 @@ from langgraph.graph import StateGraph, START, END
 from agents.Agent_base.agent_base import app_base
 
 # Import Pydantic models
-from agents.common.schemas import CartoCiudadQuerySchema, CandidateSchema, ValidationOutput, RerankSchema
+from agents.common.schemas import CartoCiudadQuerySchema, CandidateSchema, ValidationOutput, RerankSchema, RerankOrderSchema
 
 # Import custom states
 from agents.Agent_validation.states_validation import GraphStateInput, AgentState, GraphStateOutput
@@ -21,7 +21,7 @@ from agents.common.tools import search_cartociudad_tool
 from agents.common.llm_config import llm, llm_thinking
 
 # Import utility function
-from agents.common.utils import deduplicate_candidates
+from agents.common.utils import deduplicate_candidates, reorder_candidates_by_ids
 
 # --- Node Functions ---
 
@@ -236,7 +236,6 @@ def finalize_output_all_candidates_node(state: AgentState) -> Dict[str,Any] :
 def reranker_validation_node(state: AgentState) -> GraphStateOutput:
     print("--- Running Node: Reranker Intention (Re-ranking candidates) ---")
     candidates = state["final_candidates_used_for_last_call"] if state.get("max_reformulations_hit_insufficient") else state["candidates_current_iteration"]
-    # Si no se alcanzó el máximo de reformulaciones, usamos los candidatos de la iteración actual
     query_params = state["current_cartociudad_params"]
     user_query = state["user_query"]
 
@@ -244,26 +243,28 @@ def reranker_validation_node(state: AgentState) -> GraphStateOutput:
         print("Reranker Intention: No candidates to rerank.")
         return GraphStateOutput(final_candidates=[], cartociudad_query_params=query_params)
 
-    candidates_json = [c.model_dump() if hasattr(c, 'model_dump') else dict(c) for c in candidates]
-    # params_json = query_params.model_dump() if hasattr(query_params, 'model_dump') else dict(query_params)
+    # Guardar los candidatos originales en el estado efímero
+    state["original_candidates"] = candidates.copy()
 
-    structured_llm = llm.with_structured_output(RerankSchema)
+    candidates_json = [c.model_dump() if hasattr(c, 'model_dump') else dict(c) for c in candidates]
+
+    structured_llm = llm.with_structured_output(RerankOrderSchema)
     response = structured_llm.invoke([
         SystemMessage(content=RERANKER_PROMPT),
         HumanMessage(
             content=(
                 f"Consulta original del usuario: {user_query}\n"
-                # f"Parámetros utilizados: {params_json}\n"
                 f"Lista de candidatos:\n{candidates_json}\n"
-                "Devuelve la lista reordenada de candidatos en el campo 'rerank_candidates' como una lista de objetos."
+                "Devuelve la lista ordenada de IDs en el campo 'ordered_ids'."
             )
         )
     ])
 
-    reranked_candidates = response.rerank_candidates if hasattr(response, 'rerank_candidates') else candidates
+    ordered_ids = response.ordered_ids if hasattr(response, 'ordered_ids') else [c.id for c in candidates]
+    reranked_candidates = reorder_candidates_by_ids(ordered_ids, state["original_candidates"])
 
-    print(f"Reranker Base: Devolviendo {len(reranked_candidates)} candidatos reordenados.")
-    return GraphStateOutput(final_candidates=reranked_candidates, final_cartociudad_params=query_params)
+    print(f"Reranker Validation: Devolviendo {len(reranked_candidates)} candidatos reordenados.")
+    return GraphStateOutput(final_candidates=reranked_candidates, cartociudad_query_params=query_params)
 
 # --- Graph Definition ---
 graph_builder = StateGraph(AgentState, input=GraphStateInput, output=GraphStateOutput)

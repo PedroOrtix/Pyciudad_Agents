@@ -16,6 +16,8 @@ class AgentState(MessagesState):
     # Output from merged branch
     cartociudad_query_params: Optional[CartoCiudadQuerySchema] = Field(default=None)
     candidates: Optional[List[CandidateSchema]] = Field(default_factory=list)
+    original_candidates: Optional[List[CandidateSchema]] = Field(default_factory=list, description="Candidatos originales obtenidos de la API, usados para reordenar tras el rerank.")
 
 class GraphStateOutput(BaseModel):
+    cartociudad_query_params: Optional[CartoCiudadQuerySchema] = Field(default=None)
     final_candidates: List[CandidateSchema] = Field(description="The final list of candidates from CartoCiudad.")

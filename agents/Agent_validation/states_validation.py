@@ -15,6 +15,7 @@ class AgentState(MessagesState):
     last_validation_reflexion: Optional[str] = None 
 
     candidates_current_iteration: Optional[List[CandidateSchema]] = Field(default_factory=list)
+    original_candidates: Optional[List[CandidateSchema]] = Field(default_factory=list, description="Candidatos originales obtenidos de la API, usados para reordenar tras el rerank.")
     
     # Lista para acumular TODOS los candidatos de TODAS las iteraciones
     all_candidates_across_iterations: List[CandidateSchema] = Field(default_factory=list, description="Acumula todos los candidatos únicos de todas las iteraciones.")
@@ -28,4 +29,3 @@ class AgentState(MessagesState):
 
 class GraphStateOutput(BaseModel):
     final_candidates: List[CandidateSchema] = Field(description="The final list of candidates from CartoCiudad.")
-    final_cartociudad_params: CartoCiudadQuerySchema = Field(description="The final parameters used for the CartoCiudad query.")
