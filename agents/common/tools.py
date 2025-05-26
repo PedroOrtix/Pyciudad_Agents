@@ -12,10 +12,7 @@ def search_cartociudad_tool(
     municipio: Optional[Union[str, List[str]]] = None,
     provincia: Optional[Union[str, List[str]]] = None,
 ) -> List[Dict[str, Any]]:
-    """
-    Search for candidates in CartoCiudad that match the query.
-    This is the centralized tool used by all agents.
-    """
+    """Busca candidatos en CartoCiudad que coincidan con la consulta."""
     api_results = cartociudad_client.buscar_candidatos(
         consulta=consulta,
         limite=limite,

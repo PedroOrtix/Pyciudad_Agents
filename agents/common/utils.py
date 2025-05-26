@@ -1,9 +1,7 @@
 # Utilidades comunes para los agentes
 
 def deduplicate_candidates(candidates):
-    """
-    Elimina duplicados de una lista de candidatos (CandidateSchema) usando address como clave principal y id como fallback.
-    """
+    """Elimina duplicados de una lista de candidatos usando 'address' como clave principal y 'id' como respaldo."""
     unique = {}
     for cand in candidates:
         if hasattr(cand, 'address') and cand.address:

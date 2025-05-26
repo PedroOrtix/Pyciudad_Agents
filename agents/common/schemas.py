@@ -1,31 +1,22 @@
-
 from typing import List, Optional, Union, Literal
 from pydantic import BaseModel, Field, ConfigDict
 
 
 # Pydantic Schemas for Agent_base
 class NormalizedQueryKeywords(BaseModel):
-    """Schema for the output of keyword extraction and normalization."""
-    normalized_query: str = Field(description="The user query after normalization and spell checking.")
-    keywords: List[str] = Field(description="A list of extracted keywords relevant for the geographic search.")
+    normalized_query: str = Field(description="Consulta normalizada del usuario.")
+    keywords: List[str] = Field(description="Palabras clave extraídas relevantes para la búsqueda geográfica.")
 
 class CartoCiudadQuerySchema(BaseModel):
-    """
-    Schema for structuring queries to CartoCiudad.
-    """
     consulta: str
     limite: Optional[int] = 10
     municipio: Optional[Union[str, List[str]]] = None
     provincia: Optional[Union[str, List[str]]] = None
 
 class CandidateSchema(BaseModel):
-    """
-    Simplified model to store only relevant fields of a candidate.
-    Mimics the one from agent_0.py for consistency.
-    """
-    id: Optional[str] = Field(default=None, description="Unique identifier of the entity")
-    type: Optional[str] = Field(default=None, description="Entity type (e.g.: callejero, toponimo)")
-    address: Optional[str] = Field(default=None, description="Address or name of the entity")
+    id: Optional[str] = Field(default=None, description="Identificador único de la entidad")
+    type: Optional[str] = Field(default=None, description="Tipo de entidad (ej: callejero, toponimo)")
+    address: Optional[str] = Field(default=None, description="Dirección o nombre de la entidad")
     model_config = ConfigDict(extra="ignore")
 
 # Pydantic Schemas for Agent_intetion
@@ -33,9 +24,8 @@ class CandidateSchema(BaseModel):
 # NormalizedQueryKeywords, CartoCiudadQuerySchema, CandidateSchema from agent_base.py
 
 class IntentInfo(BaseModel):
-    """Schema for the output of intent detection."""
-    intent: str = Field(description="Intentions detected in the user query.")
-    justification: str = Field(description="A brief justification for the detected intent and entity type.")
+    intent: str = Field(description="Intención detectada en la consulta del usuario.")
+    justification: str = Field(description="Justificación breve para la intención detectada.")
     
 # Pydantic Schemas for Agent_intetion
 
@@ -57,7 +47,4 @@ class QualityDecision(BaseModel):
     decision: Literal["Suficiente", "Insuficiente_Escalar"]
     
 class RerankSchema(BaseModel):
-    """
-    Schema for the output of the reranking process.
-    """
-    rerank_candidates: List[CandidateSchema] = Field(description="List of candidates after reranking.")
+    rerank_candidates: List[CandidateSchema] = Field(description="Lista de candidatos tras el reranking.")

@@ -1,7 +1,6 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from langgraph.graph import MessagesState
-
 from agents.common.schemas import CartoCiudadQuerySchema, CandidateSchema
 
 # main agent state
