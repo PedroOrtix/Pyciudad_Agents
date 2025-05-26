@@ -28,30 +28,19 @@ Devuelve un resumen breve del análisis con tus conclusiones sobre lo que el usu
 """
 
 ENRICHED_QUERY_CONSTRUCTION_PROMPT = """
-Tu tarea es construir un conjunto de hasta tres variantes de búsqueda geográfica a partir de la consulta original del usuario, una lista de palabras clave y el análisis reflexivo previo.
+Tu tarea es construir una única consulta geográfica enriquecida y compatible con las restricciones del motor de búsqueda de CartoCiudad. Para ello, deberás basarte no solo en la consulta original del usuario, sino también en su intención y en la justificación que acompaña dicha intención.
+
+La consulta final debe ser clara, precisa y estar optimizada para minimizar errores de interpretación por parte del sistema.
 
 El objetivo es mejorar la robustez frente a errores del motor de búsqueda de CartoCiudad, que es estricto, sensible a palabras redundantes y poco tolerante a expresiones mal estructuradas.
 
 Para cada variante:
 - Genera una posible 'consulta' principal limpia y depurada.
-- Acompáñala, si es posible, de los campos 'municipio' y/o 'provincia', correctamente capitalizados y con tildes.
+- Si es posible, acompaña la consulta con el campo 'provincia', correctamente capitalizado y con tildes. Da preferencia a la provincia frente al municipio para abarcar mejor el área geográfica. Solo incluye el municipio si es necesario para desambiguar.
 - Asegúrate de eliminar expresiones no útiles como: "dónde está", "en", "del", "de", "por", "alrededor de", "cómo llegar a", etc., excepto si son parte del nombre oficial del lugar.
 - No antepongas palabras genéricas como "Calle", "Avenida", "Paseo" si ya forman parte del nombre de la calle original. Evita duplicidades como "Calle Paseo de los Melancólicos".
 
 Establece el valor por defecto de 'limite' a 10 en todas las variantes.
-
-El resultado debe ser una lista de hasta 3 objetos con el siguiente esquema:
-
-```json
-[
-  {
-    "consulta": "str (requerido)",
-    "limite": 10,
-    "municipio": "Optional[str]",
-    "provincia": "Optional[str]"
-  },
-  ...
-]
 """
 
 RERANKER_PROMPT = """

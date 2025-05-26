@@ -7,7 +7,7 @@ from langgraph.graph import StateGraph, START, END
 from agents.common.schemas import PipelineDecisionSchema
 
 # Import main state for the meta-agent
-from agents.Agent_ensemble.states_ensemble import MainAgentState
+from agents.Agent_ensemble.states_ensemble import MainAgentState, GraphStateOutput
 
 # Import prompts
 from agents.Agent_ensemble.prompt_ensemble import META_AGENT_EVALUATOR_PROMPT
@@ -59,6 +59,74 @@ def invoke_pipeline_complejo_node(state: MainAgentState) -> Dict[str, Any]:
         "final_cartociudad_params": subgraph_result.get("final_cartociudad_params"),
         "candidates": subgraph_result.get("final_candidates", [])
     }
+    
+def validate_decition_node(state: MainAgentState) -> Dict[str, Any]:
+    print("[MainGraph] > Validating pipeline decision and results")
+
+    pipeline = state.get("selected_pipeline_name")
+    candidates = state.get("candidates", [])
+    justification = state.get("pipeline_justification")
+    escalated_from = state.get("escalated_from", [])  # Pistas de escalado previo
+
+    # Si hay resultados, aceptar y finalizar
+    if candidates:
+        print(f"[MainGraph] > Validation: Found {len(candidates)} candidates with pipeline {pipeline}.")
+        return {
+            **state,
+            "validation_decision": "aceptar"
+        }
+
+    # Si ya hemos pasado por este pipeline antes, no repetir
+    if pipeline in escalated_from or pipeline == "PIPELINE_COMPLEJO":
+        print(f"[MainGraph] > Validation: No more escalation possible. Finishing at {pipeline}.")
+        return {
+            **state,
+            "validation_decision": "forzar_fin"
+        }
+
+    # Escalamos al siguiente pipeline (si es posible)
+    next_pipeline = {
+        "PIPELINE_SIMPLE": "PIPELINE_INTERMEDIO",
+        "PIPELINE_INTERMEDIO": "PIPELINE_COMPLEJO"
+    }.get(pipeline, "PIPELINE_COMPLEJO")
+
+    print(f"[MainGraph] > Validation: Escalating from {pipeline} to {next_pipeline}.")
+    return {
+        **state,
+        "selected_pipeline_name": next_pipeline,
+        "pipeline_justification": justification + f" | Escalado automático desde {pipeline}",
+        "validation_decision": "escalar",
+        "escalated_from": escalated_from + [pipeline],
+    }
+
+        
+def validate_router(state: MainAgentState) -> str:
+    decision = state.get("validation_decision")
+    pipeline = state.get("selected_pipeline_name")
+
+    if decision == "aceptar" or decision == "forzar_fin":
+        print(f"[MainGraph] > Routing to output_node. Decision: {decision}")
+        return "output_node"
+    
+    if decision == "escalar":
+        print(f"[MainGraph] > Routing to next pipeline: {pipeline}")
+        if pipeline == "PIPELINE_SIMPLE":
+            return "invoke_simple"
+        elif pipeline == "PIPELINE_INTERMEDIO":
+            return "invoke_intermedio"
+        elif pipeline == "PIPELINE_COMPLEJO":
+            return "invoke_complejo"
+
+    print(f"[MainGraph] > Unknown routing decision '{decision}'. Ending.")
+    return "output_node"  # Fallback to output node
+
+def output_node(state: MainAgentState) -> GraphStateOutput:
+    """Final output node to return the results of the main graph."""
+    print("[MainGraph] > Output Node")
+    return GraphStateOutput(
+        final_candidates=state.get("candidates", []),
+        cartociudad_query_params=state.get("final_cartociudad_params")
+    )
 
 # Conditional Router for Pipeline Selection (in Main Graph)
 def main_select_pipeline_router(state: MainAgentState) -> str:
@@ -74,12 +142,16 @@ def main_select_pipeline_router(state: MainAgentState) -> str:
     return "invoke_simple" # Fallback
 
 # --- Build the Main Graph ---
-graph_builder = StateGraph(MainAgentState)
+graph_builder = StateGraph(MainAgentState, output=GraphStateOutput)
 
 graph_builder.add_node("meta_evaluator", meta_agent_evaluator_node)
 graph_builder.add_node("invoke_simple", invoke_pipeline_simple_node)
 graph_builder.add_node("invoke_intermedio", invoke_pipeline_intermedio_node)
 graph_builder.add_node("invoke_complejo", invoke_pipeline_complejo_node)
+graph_builder.add_node("validate_decision", validate_decition_node)
+graph_builder.add_node("output_node", output_node)
+
+# Cambia el flujo: después de cada pipeline, va a validación
 
 graph_builder.add_edge(START, "meta_evaluator")
 
@@ -93,8 +165,21 @@ graph_builder.add_conditional_edges(
     }
 )
 
-graph_builder.add_edge("invoke_simple", END)
-graph_builder.add_edge("invoke_intermedio", END)
-graph_builder.add_edge("invoke_complejo", END)
+graph_builder.add_edge("invoke_simple", "validate_decision")
+graph_builder.add_edge("invoke_intermedio", "validate_decision")
+graph_builder.add_edge("invoke_complejo", "validate_decision")
+
+graph_builder.add_conditional_edges(
+    "validate_decision",
+    validate_router,
+    {
+        "invoke_simple": "invoke_simple",
+        "invoke_intermedio": "invoke_intermedio",
+        "invoke_complejo": "invoke_complejo",
+        "output_node": "output_node"
+    }
+)
+
+graph_builder.add_edge("output_node", END)
 
 app_ensemble = graph_builder.compile()
