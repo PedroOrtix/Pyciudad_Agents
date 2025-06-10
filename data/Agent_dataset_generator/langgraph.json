@@ -1,0 +1,7 @@
+{
+  "dependencies": ["../../agents/"],
+  "graphs": {
+    "dataset_generator": "./agent_dataset_generator.py:app_dataset_generator"
+  },
+  "env": ".env"
+} 
