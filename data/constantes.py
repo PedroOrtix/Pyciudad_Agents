@@ -1,0 +1,33 @@
+FILTROS_TIPO_ENTIDAD = {
+    "municipio": "municipio",
+    "provincia": "provincia",
+    "comunidad_autonoma": "comunidad autonoma",
+    "poblacion": "poblacion",
+    "toponimo": "toponimo",
+    "expendeduria": "expendeduria",
+    "punto_recarga_electrica": "punto_recarga_electrica",
+    "ngbe": "ngbe",
+    "callejero": "callejero",
+    "carretera": "carretera",
+    "portal": "portal",
+}
+
+provincias_de_espana_por_comunidad = {
+    "Andalucía": ["Almería", "Cádiz", "Córdoba", "Granada", "Huelva", "Jaén", "Málaga", "Sevilla"],
+    "Aragón": ["Huesca", "Teruel", "Zaragoza"],
+    "Principado de Asturias": ["Asturias"],
+    "Illes Balears": ["Illes Balears"],
+    "Canarias": ["Las Palmas", "Santa Cruz de Tenerife"],
+    "Cantabria": ["Cantabria"],
+    "Castilla-La Mancha": ["Albacete", "Ciudad Real", "Cuenca", "Guadalajara", "Toledo"],
+    "Castilla y León": ["Ávila", "Burgos", "León", "Palencia", "Salamanca", "Segovia", "Soria", "Valladolid", "Zamora"],
+    "Cataluña": ["Barcelona", "Girona", "Lleida", "Tarragona"],
+    "Comunitat Valenciana": ["Alicante", "Castellón", "Valencia"],
+    "Extremadura": ["Badajoz", "Cáceres"],
+    "Galicia": ["A Coruña", "Lugo", "Ourense", "Pontevedra"],
+    "Comunidad de Madrid": ["Madrid"],
+    "Región de Murcia": ["Murcia"],
+    "Comunidad Foral de Navarra": ["Navarra"],
+    "País Vasco": ["Álava", "Gipuzkoa", "Bizkaia"],
+    "La Rioja": ["La Rioja"],
+} 

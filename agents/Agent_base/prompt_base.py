@@ -1,13 +1,32 @@
 NORMALIZATION_PROMPT = """
 Tu tarea es procesar la consulta del usuario para una búsqueda geográfica.
 
+**PROVINCIAS Y COMUNIDADES AUTÓNOMAS DE ESPAÑA (para referencia):**
+- Andalucía: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga, Sevilla
+- Aragón: Huesca, Teruel, Zaragoza
+- Principado de Asturias: Asturias
+- Illes Balears: Illes Balears
+- Canarias: Las Palmas, Santa Cruz de Tenerife
+- Cantabria: Cantabria
+- Castilla-La Mancha: Albacete, Ciudad Real, Cuenca, Guadalajara, Toledo
+- Castilla y León: Ávila, Burgos, León, Palencia, Salamanca, Segovia, Soria, Valladolid, Zamora
+- Cataluña: Barcelona, Girona, Lleida, Tarragona
+- Comunitat Valenciana: Alicante, Castellón, Valencia
+- Extremadura: Badajoz, Cáceres
+- Galicia: A Coruña, Lugo, Ourense, Pontevedra
+- Comunidad de Madrid: Madrid
+- Región de Murcia: Murcia
+- Comunidad Foral de Navarra: Navarra
+- País Vasco: Álava, Gipuzkoa, Bizkaia
+- La Rioja: La Rioja
+
 Debes:
 1. Corregir errores ortográficos comunes, incluyendo el uso correcto de tildes (por ejemplo, "mostoles" → "Móstoles", "leganes" → "Leganés").
 2. Expandir abreviaturas geográficas si es posible (por ejemplo, "avda" → "avenida", "c/" → "calle").
 3. Eliminar expresiones que no aportan valor geográfico, como:
    - "dónde está", "cómo llegar", "cerca de", "alrededor de", "en la zona de", "quiero ir a", "me gustaría ver", etc.
 4. Mantener los nombres propios, referencias culturales o acrónimos (como "KIO", "Atocha") tal como están, especialmente si están en mayúsculas o reconocidos localmente.
-5. Capitalizar correctamente los nombres de municipios, provincias, barrios y calles (ejemplo: "madrid" → "Madrid", "rio guadiana" → "Río Guadiana").
+5. Capitalizar correctamente los nombres de municipios, provincias, barrios y calles usando la lista de referencia anterior (ejemplo: "madrid" → "Madrid", "rio guadiana" → "Río Guadiana", "la coruña" → "A Coruña").
 
 Devuelve dos elementos:
 - `consulta_normalizada`: una cadena de texto limpia y enfocada en los elementos geográficos relevantes.
@@ -19,6 +38,26 @@ Tu tarea es tomar una consulta de usuario ya normalizada junto con sus palabras 
 
 Este motor de búsqueda es estricto y se basa en coincidencias textuales y heurísticas. Por eso, la cadena de texto que construyas para el campo 'consulta' debe estar totalmente limpia y enfocada a los elementos geográficos relevantes.
 
+**PROVINCIAS Y COMUNIDADES AUTÓNOMAS DE ESPAÑA:**
+Las provincias válidas son:
+- Andalucía: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga, Sevilla
+- Aragón: Huesca, Teruel, Zaragoza
+- Principado de Asturias: Asturias
+- Illes Balears: Illes Balears
+- Canarias: Las Palmas, Santa Cruz de Tenerife
+- Cantabria: Cantabria
+- Castilla-La Mancha: Albacete, Ciudad Real, Cuenca, Guadalajara, Toledo
+- Castilla y León: Ávila, Burgos, León, Palencia, Salamanca, Segovia, Soria, Valladolid, Zamora
+- Cataluña: Barcelona, Girona, Lleida, Tarragona
+- Comunitat Valenciana: Alicante, Castellón, Valencia
+- Extremadura: Badajoz, Cáceres
+- Galicia: A Coruña, Lugo, Ourense, Pontevedra
+- Comunidad de Madrid: Madrid
+- Región de Murcia: Murcia
+- Comunidad Foral de Navarra: Navarra
+- País Vasco: Álava, Gipuzkoa, Bizkaia
+- La Rioja: La Rioja
+
 Asegúrate de que la consulta no contenga expresiones que no aportan valor a nivel de búsqueda, como:
 - "dónde está", "cómo llegar a", "cerca de", "alrededor de", "en la zona de", "quiero ir a", etc.
 - Cualquier expresión coloquial o sin valor geográfico directo.
@@ -27,7 +66,8 @@ Construye un único objeto de parámetros. Por defecto, establece un límite de 
 
 - Prioriza el campo `consulta`, que debe contener toda la información geográfica relevante.
 - Puedes incluir `municipio` o `provincia` **solo si las palabras clave lo indican claramente**.
-- Si incluyes valores en los campos `municipio`, `provincia`, o similares, **asegúrate de que empiecen con mayúscula**, como nombres oficiales.
+- Si incluyes valores en los campos `municipio`, `provincia`, usa EXACTAMENTE los nombres de la lista anterior, respetando mayúsculas y tildes.
+- Utiliza preferentemente `provincia` antes que `municipio` para tener mayor cobertura geográfica.
 
 No incluyas campos innecesarios o inferidos sin evidencia.
 

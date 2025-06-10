@@ -1,13 +1,32 @@
 KEYWORD_EXTRACTION_PROMPT = """
 Tu tarea es procesar la consulta del usuario para una búsqueda geográfica.
 
+**PROVINCIAS Y COMUNIDADES AUTÓNOMAS DE ESPAÑA (para referencia):**
+- Andalucía: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga, Sevilla
+- Aragón: Huesca, Teruel, Zaragoza
+- Principado de Asturias: Asturias
+- Illes Balears: Illes Balears
+- Canarias: Las Palmas, Santa Cruz de Tenerife
+- Cantabria: Cantabria
+- Castilla-La Mancha: Albacete, Ciudad Real, Cuenca, Guadalajara, Toledo
+- Castilla y León: Ávila, Burgos, León, Palencia, Salamanca, Segovia, Soria, Valladolid, Zamora
+- Cataluña: Barcelona, Girona, Lleida, Tarragona
+- Comunitat Valenciana: Alicante, Castellón, Valencia
+- Extremadura: Badajoz, Cáceres
+- Galicia: A Coruña, Lugo, Ourense, Pontevedra
+- Comunidad de Madrid: Madrid
+- Región de Murcia: Murcia
+- Comunidad Foral de Navarra: Navarra
+- País Vasco: Álava, Gipuzkoa, Bizkaia
+- La Rioja: La Rioja
+
 Debes:
 1. Corregir errores ortográficos comunes, incluyendo el uso correcto de tildes (por ejemplo, "mostoles" → "Móstoles", "leganes" → "Leganés").
 2. Expandir abreviaturas geográficas si es posible (por ejemplo, "avda" → "avenida", "c/" → "calle").
 3. Eliminar expresiones que no aportan valor geográfico, como:
    - "dónde está", "cómo llegar", "cerca de", "alrededor de", "en la zona de", "quiero ir a", "me gustaría ver", etc.
 4. Mantener los nombres propios, referencias culturales o acrónimos (como "KIO", "Atocha") tal como están, especialmente si están en mayúsculas o reconocidos localmente.
-5. Capitalizar correctamente los nombres de municipios, provincias, barrios y calles (ejemplo: "madrid" → "Madrid", "rio guadiana" → "Río Guadiana").
+5. Capitalizar correctamente los nombres de municipios, provincias, barrios y calles usando la lista de referencia anterior (ejemplo: "madrid" → "Madrid", "rio guadiana" → "Río Guadiana", "la coruña" → "A Coruña").
 
 Devuelve dos elementos:
 - `consulta_normalizada`: una cadena de texto limpia y enfocada en los elementos geográficos relevantes.
@@ -32,11 +51,31 @@ Tu tarea es construir una única consulta geográfica enriquecida y compatible c
 
 La consulta final debe ser clara, precisa y estar optimizada para minimizar errores de interpretación por parte del sistema.
 
+**PROVINCIAS Y COMUNIDADES AUTÓNOMAS DE ESPAÑA:**
+Las provincias válidas son:
+- Andalucía: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga, Sevilla
+- Aragón: Huesca, Teruel, Zaragoza
+- Principado de Asturias: Asturias
+- Illes Balears: Illes Balears
+- Canarias: Las Palmas, Santa Cruz de Tenerife
+- Cantabria: Cantabria
+- Castilla-La Mancha: Albacete, Ciudad Real, Cuenca, Guadalajara, Toledo
+- Castilla y León: Ávila, Burgos, León, Palencia, Salamanca, Segovia, Soria, Valladolid, Zamora
+- Cataluña: Barcelona, Girona, Lleida, Tarragona
+- Comunitat Valenciana: Alicante, Castellón, Valencia
+- Extremadura: Badajoz, Cáceres
+- Galicia: A Coruña, Lugo, Ourense, Pontevedra
+- Comunidad de Madrid: Madrid
+- Región de Murcia: Murcia
+- Comunidad Foral de Navarra: Navarra
+- País Vasco: Álava, Gipuzkoa, Bizkaia
+- La Rioja: La Rioja
+
 El objetivo es mejorar la robustez frente a errores del motor de búsqueda de CartoCiudad, que es estricto, sensible a palabras redundantes y poco tolerante a expresiones mal estructuradas.
 
 Para cada variante:
 - Genera una posible 'consulta' principal limpia y depurada.
-- Si es posible, acompaña la consulta con el campo 'provincia', correctamente capitalizado y con tildes. Da preferencia a la provincia frente al municipio para abarcar mejor el área geográfica. Solo incluye el municipio si es necesario para desambiguar.
+- Si es posible, acompaña la consulta con el campo 'provincia', utilizando EXACTAMENTE los nombres de la lista anterior, correctamente capitalizado y con tildes. Da preferencia a la provincia frente al municipio para abarcar mejor el área geográfica. Solo incluye el municipio si es necesario para desambiguar.
 - Asegúrate de eliminar expresiones no útiles como: "dónde está", "en", "del", "de", "por", "alrededor de", "cómo llegar a", etc., excepto si son parte del nombre oficial del lugar.
 - No antepongas palabras genéricas como "Calle", "Avenida", "Paseo" si ya forman parte del nombre de la calle original. Evita duplicidades como "Calle Paseo de los Melancólicos".
 

@@ -3,62 +3,62 @@ from typing import Dict, Any, Optional
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 
-# Import Pydantic models
+# Importar modelos Pydantic
 from agents.common.schemas import NormalizedQueryKeywords, CartoCiudadQuerySchema, CandidateSchema, IntentInfo, RerankSchema, RerankOrderSchema
 
-# import custom states
+# Importar estados personalizados
 from agents.Agent_intention.states_intention import AgentState, GraphStateOutput, GraphStateInput
 
-# import prompts
+# Importar prompts
 from agents.Agent_intention.prompt_intetion import KEYWORD_EXTRACTION_PROMPT, INTENT_DETECTION_PROMPT, ENRICHED_QUERY_CONSTRUCTION_PROMPT, RERANKER_PROMPT
 
-# import cartocidad tool
+# Importar herramienta CartoCiudad
 from agents.common.tools import search_cartociudad_tool
 from agents.common.llm_config import llm, llm_thinking
 
-# import deduplication utility
+# Importar utilidades de deduplicación
 from agents.common.utils import deduplicate_candidates, reorder_candidates_by_ids
 
-# --- Node Functions ---
+# --- Funciones de Nodos ---
 
 def keyword_extraction_node(state: GraphStateInput) -> Dict[str, Any]:
-    print("--- Running Node: Keyword Extraction ---")
+    """Extrae palabras clave de la consulta del usuario."""
+    print("→ Extrayendo palabras clave")
     user_query = state.user_query
     structured_llm = llm.with_structured_output(NormalizedQueryKeywords)
     response = structured_llm.invoke([
         SystemMessage(content=KEYWORD_EXTRACTION_PROMPT),
         HumanMessage(content=f"Consulta del usuario: {user_query}")
     ])
-    print(f"Extracted Keywords: {response.keywords}")
+    print(f"  🔑 Palabras clave extraídas: {response.keywords}")
     return {"keywords": response.keywords}
 
 def intent_detection_node(state: GraphStateInput) -> Dict[str, Any]:
-    print("--- Running Node: Intent Detection ---")
+    """Detecta la intención del usuario en la consulta."""
+    print("→ Detectando intención del usuario")
     user_query = state.user_query
     structured_llm = llm_thinking.with_structured_output(IntentInfo)
     response = structured_llm.invoke([
         SystemMessage(content=INTENT_DETECTION_PROMPT),
         HumanMessage(content=f"Consulta del usuario: {user_query}")
     ])
-    print(f"Justification: {response.justification}")
+    print(f"  🎯 Intención detectada: {response.intent}")
     return {"intent_info": response}
 
 def enriched_query_construction_node(state: AgentState) -> Dict[str, Any]:
-    print("--- Running Node: Enriched Query Construction ---")
+    """Construye una consulta enriquecida usando palabras clave e intención."""
+    print("→ Construyendo consulta enriquecida")
     user_query = state["user_query"]
     keywords = state.get("keywords", [])
     intent_info: Optional[IntentInfo] = state.get("intent_info")
 
     if not intent_info:
-        print("Warning: Intent information is missing. Cannot construct enriched query effectively.")
-        # Fallback or error handling can be added here
-        # For simplicity, we'll proceed, but the query might be suboptimal
+        print("  ⚠️ Información de intención faltante, usando valores por defecto")
         intent_str = "desconocida"
         justification_str = "Información de intención no disponible."
     else:
         intent_str = intent_info.intent
         justification_str = intent_info.justification
-
 
     structured_llm = llm.with_structured_output(CartoCiudadQuerySchema)
     response = structured_llm.invoke([
@@ -73,19 +73,19 @@ def enriched_query_construction_node(state: AgentState) -> Dict[str, Any]:
             )
         )
     ])
-    print(f"CartoCiudad Query Params: {response.model_dump_json(indent=2)}")
+    print(f"  📋 Consulta enriquecida: '{response.consulta}' (límite: {response.limite})")
     return {"cartociudad_query_params": response}
 
 def call_cartociudad_api_node(state: AgentState) -> Dict[str, Any]:
-    print("--- Running Node: Call CartoCiudad API ---")
+    """Realiza la llamada a la API de CartoCiudad."""
+    print("→ Llamando a la API de CartoCiudad")
     query_params: Optional[CartoCiudadQuerySchema] = state.get("cartociudad_query_params")
 
     if not query_params:
-        print("Warning: No CartoCiudad query parameters found. Skipping API call.")
+        print("  ⚠️ Sin parámetros de consulta, omitiendo llamada a API")
         return {"candidates": []}
 
     try:
-        # Use the imported tool
         raw_results = search_cartociudad_tool(
             consulta=query_params.consulta,
             limite=query_params.limite or 10,
@@ -94,25 +94,24 @@ def call_cartociudad_api_node(state: AgentState) -> Dict[str, Any]:
         )
         processed_candidates = [CandidateSchema(**res) for res in raw_results]
         deduped_candidates = deduplicate_candidates(processed_candidates)
-        print(f"Found {len(deduped_candidates)} candidates from CartoCiudad (deduplicated).")
-        for cand in deduped_candidates:
-            print(f"  - ID: {cand.id}, Type: {cand.type}, Address: {cand.address}")
+        print(f"  ✓ Encontrados {len(deduped_candidates)} candidatos únicos")
         return {"candidates": deduped_candidates}
     except Exception as e:
-        print(f"Error calling CartoCiudad API: {e}")
+        print(f"  ❌ Error en API CartoCiudad: {e}")
         return {"candidates": []}
 
 def reranker_intention_node(state: AgentState) -> GraphStateOutput:
-    print("--- Running Node: Reranker Intention (Re-ranking candidates) ---")
+    """Reordena los candidatos según su relevancia para la consulta e intención."""
+    print("→ Reordenando candidatos por relevancia e intención")
     candidates = state["candidates"]
     query_params = state["cartociudad_query_params"]
     user_query = state["user_query"]
 
     if not candidates:
-        print("Reranker Intention: No candidates to rerank.")
+        print("  ℹ️ Sin candidatos para reordenar")
         return GraphStateOutput(final_candidates=[], cartociudad_query_params=query_params)
 
-    # Guardar los candidatos originales en el estado efímero
+    # Guardar candidatos originales para el reordenamiento
     state["original_candidates"] = candidates.copy()
 
     candidates_json = [c.model_dump() if hasattr(c, 'model_dump') else dict(c) for c in candidates]
@@ -134,21 +133,22 @@ def reranker_intention_node(state: AgentState) -> GraphStateOutput:
     ordered_ids = response.ordered_ids if hasattr(response, 'ordered_ids') else [c.id for c in candidates]
     reranked_candidates = reorder_candidates_by_ids(ordered_ids, state["original_candidates"])
 
-    print(f"Reranker Intention: Devolviendo {len(reranked_candidates)} candidatos reordenados.")
+    print(f"  ✓ Reordenados {len(reranked_candidates)} candidatos")
     return GraphStateOutput(final_candidates=reranked_candidates, cartociudad_query_params=query_params)
 
-# --- Graph Definition ---
+# --- Definición del Grafo ---
 graph_builder = StateGraph(AgentState, input=GraphStateInput, output=GraphStateOutput)
 
-# Add nodes for parallel branches
+# Agregar nodos para ramas paralelas
 graph_builder.add_node("keyword_extraction", keyword_extraction_node)
 graph_builder.add_node("intent_detection", intent_detection_node)
 
-# Add node for merging and subsequent steps
+# Agregar nodos para fusión y pasos subsecuentes
 graph_builder.add_node("construct_enriched_query", enriched_query_construction_node)
 graph_builder.add_node("call_cartociudad", call_cartociudad_api_node)
 graph_builder.add_node("reranker_intention", reranker_intention_node)
 
+# Definir aristas para procesamiento paralelo
 graph_builder.add_edge(START, "keyword_extraction")
 graph_builder.add_edge(START, "intent_detection")
 

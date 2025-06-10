@@ -3,26 +3,27 @@ from typing import Optional, Dict, Any
 from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 
-# import pydantic models
+# Importar modelos Pydantic
 from agents.common.schemas import NormalizedQueryKeywords, CartoCiudadQuerySchema, CandidateSchema, RerankSchema, RerankOrderSchema
 
-# import custom states
+# Importar estados personalizados
 from agents.Agent_base.states_base import GraphStateInput, AgentState, GraphStateOutput
 
-# import prompts
+# Importar prompts
 from agents.Agent_base.prompt_base import NORMALIZATION_PROMPT, QUERY_CONSTRUCTION_PROMPT, RERANKER_PROMPT
 
-# import cartociudad tool
+# Importar herramienta CartoCiudad
 from agents.common.tools import search_cartociudad_tool
 from agents.common.llm_config import llm
 
-# import deduplication utility
+# Importar utilidades de deduplicación
 from agents.common.utils import deduplicate_candidates, reorder_candidates_by_ids
 
-# --- Node Functions ---
+# --- Funciones de Nodos ---
 
 def extract_normalize_node(state: GraphStateInput) -> Dict[str, Any]:
-    print("--- Running Node: Keyword Extraction & Normalization ---")
+    """Extrae y normaliza palabras clave de la consulta del usuario."""
+    print("→ Normalizando consulta y extrayendo palabras clave")
     user_query = state.user_query
     context_from_meta_evaluator = state.context_from_meta_evaluator
 
@@ -33,20 +34,21 @@ def extract_normalize_node(state: GraphStateInput) -> Dict[str, Any]:
         HumanMessage(content=f"Contexto del meta-evaluador: {context_from_meta_evaluator}") if context_from_meta_evaluator else ""
     ])
 
-    print(f"Normalized Query: {response.normalized_query}")
-    print(f"Keywords: {response.keywords}")
+    print(f"  Consulta normalizada: {response.normalized_query}")
+    print(f"  Palabras clave: {response.keywords}")
     return {
         "normalized_query": response.normalized_query,
         "keywords": response.keywords
     }
 
 def query_construction_node(state: AgentState) -> Dict[str, Any]:
-    print("--- Running Node: Query Construction ---")
+    """Construye los parámetros de consulta para la API de CartoCiudad."""
+    print("→ Construyendo parámetros de consulta")
     normalized_query = state.get("normalized_query")
     keywords = state.get("keywords", [])
 
     if not normalized_query:
-        print("Warning: Normalized query is missing. Cannot construct CartoCiudad query.")
+        print("  ⚠️ Consulta normalizada faltante, omitiendo construcción")
         return {"cartociudad_query_params": None}
 
     structured_llm = llm.with_structured_output(CartoCiudadQuerySchema)
@@ -61,19 +63,19 @@ def query_construction_node(state: AgentState) -> Dict[str, Any]:
         )
     ])
     
-    print(f"CartoCiudad Query Params: {response.model_dump_json(indent=2)}")
+    print(f"  Parámetros generados: consulta='{response.consulta}', límite={response.limite}")
     return {"cartociudad_query_params": response}
 
 def call_cartociudad_api_node(state: AgentState) -> Dict[str, Any]:
-    print("--- Running Node: Call CartoCiudad API ---")
+    """Realiza la llamada a la API de CartoCiudad y procesa los resultados."""
+    print("→ Llamando a la API de CartoCiudad")
     query_params: Optional[CartoCiudadQuerySchema] = state.get("cartociudad_query_params")
 
     if not query_params:
-        print("Warning: No CartoCiudad query parameters found. Skipping API call.")
+        print("  ⚠️ Sin parámetros de consulta, omitiendo llamada a API")
         return {"candidates": []}
 
     try:
-        # Use the imported tool
         raw_results = search_cartociudad_tool(
             consulta=query_params.consulta,
             limite=query_params.limite or 10,
@@ -81,41 +83,37 @@ def call_cartociudad_api_node(state: AgentState) -> Dict[str, Any]:
             provincia=query_params.provincia,
         )
         
-        # Convert raw results to CandidateSchema
         processed_candidates = [CandidateSchema(**res) for res in raw_results]
         deduped_candidates = deduplicate_candidates(processed_candidates)
         
-        print(f"Found {len(deduped_candidates)} candidates from CartoCiudad (deduplicated).")
-        for cand in deduped_candidates:
-            print(f"  - ID: {cand.id}, Type: {cand.type}, Address: {cand.address}")
+        print(f"  ✓ Encontrados {len(deduped_candidates)} candidatos únicos")
         
-        # Instead of returning, pass to next node
         return {
             "candidates": deduped_candidates,
             "cartociudad_query_params": query_params
         }
 
     except Exception as e:
-        print(f"Error calling CartoCiudad API: {e}")
+        print(f"  ❌ Error en API CartoCiudad: {e}")
         return {"candidates": [], "cartociudad_query_params": query_params}
 
 def reranker_base_node(state: AgentState) -> GraphStateOutput:
-    print("--- Running Node: Reranker Base (Re-ranking candidates) ---")
+    """Reordena los candidatos según su relevancia para la consulta."""
+    print("→ Reordenando candidatos por relevancia")
     candidates = state["candidates"]
     query_params = state["cartociudad_query_params"]
     user_query = state["user_query"]
 
     if not candidates:
-        print("Reranker Base: No candidates to rerank.")
+        print("  ℹ️ Sin candidatos para reordenar")
         return GraphStateOutput(final_candidates=[], cartociudad_query_params=query_params)
 
-    # Guardar los candidatos originales en el estado efímero
+    # Guardar candidatos originales para el reordenamiento
     state["original_candidates"] = candidates.copy()
 
     candidates_json = [c.model_dump() if hasattr(c, 'model_dump') else dict(c) for c in candidates]
     params_json = query_params.model_dump() if hasattr(query_params, 'model_dump') else dict(query_params)
 
-    # Llama al LLM con el prompt de reranking y espera un output estructurado según RerankOrderSchema
     structured_llm = llm.with_structured_output(RerankOrderSchema)
     response = structured_llm.invoke([
         SystemMessage(content=RERANKER_PROMPT),
@@ -132,24 +130,24 @@ def reranker_base_node(state: AgentState) -> GraphStateOutput:
     ordered_ids = response.ordered_ids if hasattr(response, 'ordered_ids') else [c.id for c in candidates]
     reranked_candidates = reorder_candidates_by_ids(ordered_ids, state["original_candidates"])
 
-    print(f"Reranker Base: Devolviendo {len(reranked_candidates)} candidatos reordenados.")
+    print(f"  ✓ Reordenados {len(reranked_candidates)} candidatos")
     return GraphStateOutput(final_candidates=reranked_candidates, cartociudad_query_params=query_params)
 
-# --- Graph Definition ---
+# --- Definición del Grafo ---
 graph_builder = StateGraph(AgentState, input=GraphStateInput, output=GraphStateOutput)
 
-# Add nodes
+# Agregar nodos
 graph_builder.add_node("extract_normalize", extract_normalize_node)
 graph_builder.add_node("construct_query", query_construction_node)
 graph_builder.add_node("call_cartociudad", call_cartociudad_api_node)
 graph_builder.add_node("reranker_base", reranker_base_node)
 
-# Define edges
+# Definir aristas
 graph_builder.add_edge(START, "extract_normalize")
 graph_builder.add_edge("extract_normalize", "construct_query")
 graph_builder.add_edge("construct_query", "call_cartociudad")
 graph_builder.add_edge("call_cartociudad", "reranker_base")
 graph_builder.add_edge("reranker_base", END)
 
-# Compile the graph
+# Compilar el grafo
 app_base = graph_builder.compile()

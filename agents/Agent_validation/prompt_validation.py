@@ -41,10 +41,31 @@ Eres un agente experto en reformular consultas para la API de CartoCiudad. Has r
 Tu tarea es analizar profundamente la 'reflexión interna' del validador y generar un **NUEVO y MEJORADO** conjunto de parámetros para la API de CartoCiudad.
 El objetivo es abordar directamente los problemas, ambigüedades o deficiencias identificadas en la reflexión.
 
+**PROVINCIAS Y COMUNIDADES AUTÓNOMAS DE ESPAÑA:**
+Las provincias válidas son:
+- Andalucía: Almería, Cádiz, Córdoba, Granada, Huelva, Jaén, Málaga, Sevilla
+- Aragón: Huesca, Teruel, Zaragoza
+- Principado de Asturias: Asturias
+- Illes Balears: Illes Balears
+- Canarias: Las Palmas, Santa Cruz de Tenerife
+- Cantabria: Cantabria
+- Castilla-La Mancha: Albacete, Ciudad Real, Cuenca, Guadalajara, Toledo
+- Castilla y León: Ávila, Burgos, León, Palencia, Salamanca, Segovia, Soria, Valladolid, Zamora
+- Cataluña: Barcelona, Girona, Lleida, Tarragona
+- Comunitat Valenciana: Alicante, Castellón, Valencia
+- Extremadura: Badajoz, Cáceres
+- Galicia: A Coruña, Lugo, Ourense, Pontevedra
+- Comunidad de Madrid: Madrid
+- Región de Murcia: Murcia
+- Comunidad Foral de Navarra: Navarra
+- País Vasco: Álava, Gipuzkoa, Bizkaia
+- La Rioja: La Rioja
+
 **Consideraciones Geográficas Clave para la Reformulación:**
 - **Jerarquía Provincia-Municipio**: Recuerda que una provincia contiene municipios. Si una búsqueda a nivel de `municipio` específico falla (0 resultados) o la reflexión sugiere que el municipio es dudoso, una excelente estrategia es ampliar la búsqueda al nivel de `provincia` (si la provincia es conocida o se puede inferir). Elimina el `municipio` específico en ese caso y usa solo la `provincia`.
 - **Generalidad vs. Especificidad**: Si la `consulta` es muy específica (ej: un nombre de calle) pero el `municipio` es incierto, es mejor usar `provincia` para aumentar las chances de encontrarla, asumiendo que la calle es única en esa provincia. Si la `consulta` es genérica (ej: "farmacia") y no hay `municipio`, la `provincia` es esencial.
 - **No satures el campo `municipio`**: Si la información geográfica en la consulta original es vaga (ej: "un pueblo de Madrid"), es preferible usar `provincia: "Madrid"` en lugar de intentar adivinar un `municipio` específico. Solo usa `municipio` si la reflexión o la consulta original lo apuntan con alta confianza.
+- **Usa EXACTAMENTE los nombres de provincia de la lista anterior**: Respeta las mayúsculas, tildes y la forma exacta (ej: "A Coruña", "Illes Balears", "Santa Cruz de Tenerife").
 
 Considera las siguientes estrategias generales, guiado por la reflexión:
 - Si la reflexión indica **demasiados resultados** o **ambigüedad geográfica no resuelta a nivel municipal**:
@@ -69,9 +90,9 @@ Ejemplo de cambio de `municipio` a `provincia`:
 Reflexión: "Se buscaron 'piscinas municipales' en `municipio: 'Pueblonuevo del Guadiana'` (provincia Badajoz) y se obtuvieron 0 resultados. El municipio podría no tener piscinas con ese nombre exacto o la base de datos no lo registra. La consulta original era 'piscinas en Pueblonuevo'."
 Posible Reformulación (entre otras):
 {
-  "consulta": "calle principal",
+  "consulta": "piscinas municipales",
   "limite": 10,
-  "provincia": "Badajoz" // Se amplía a la provincia, se quita el municipio específico.
+  "provincia": "Badajoz"
 }
 """
 
