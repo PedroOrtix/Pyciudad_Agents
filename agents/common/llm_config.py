@@ -1,7 +1,6 @@
 import os
 from langchain_ollama import ChatOllama
 from evaluation.core.network_resilience import with_network_resilience
-import functools
 
 # Initialize LLM models
 model_name = os.environ.get("OLLAMA_MODEL", "qwen3:30b-a3b") # Default model

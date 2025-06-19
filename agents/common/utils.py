@@ -1,6 +1,6 @@
 # Utilidades comunes para los agentes
 
-from typing import List, Dict, Any
+from typing import List, Dict
 from agents.common.schemas import CandidateSchema
 
 def deduplicate_candidates(candidates: List[CandidateSchema]) -> List[CandidateSchema]:

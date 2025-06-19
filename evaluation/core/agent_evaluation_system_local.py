@@ -11,7 +11,7 @@ import statistics
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 import json
 import numpy as np
 
@@ -93,12 +93,12 @@ class AgentEvaluationSystemLocal:
         # Inicializar sistema de checkpoints
         self.checkpoint_system = EvaluationCheckpoint()
         
-        print(f"🎯 Sistema de Evaluación LOCAL inicializado")
+        print("🎯 Sistema de Evaluación LOCAL inicializado")
         print(f"📊 Dataset: {dataset_path}")
         print(f"🤖 Agentes disponibles: {', '.join(self.agents.keys())}")
-        print(f"📈 Evaluación con Ground Truth: ACTIVADA")
-        print(f"🔧 Modo: EJECUCIÓN LOCAL (sin LangGraph server)")
-        print(f"🛡️  Sistema de robustez de red: ACTIVADO")
+        print("📈 Evaluación con Ground Truth: ACTIVADA")
+        print("🔧 Modo: EJECUCIÓN LOCAL (sin LangGraph server)")
+        print("🛡️  Sistema de robustez de red: ACTIVADO")
         
         # Verificar conectividad inicial
         try:
@@ -135,12 +135,12 @@ class AgentEvaluationSystemLocal:
             if max_samples:
                 dataset = dataset[:max_samples]
                 
-            print(f"📊 Dataset cargado: {len(dataset)} muestras")
+            print("📊 Dataset cargado: {len(dataset)} muestras")
             
             # Verificar que todas las muestras tienen ground truth
             missing_gt = [i for i, sample in enumerate(dataset) if not sample.get("ground_truth_id")]
             if missing_gt:
-                print(f"⚠️  {len(missing_gt)} muestras sin ground_truth_id")
+                print("⚠️  {len(missing_gt)} muestras sin ground_truth_id")
             
             return dataset
             
@@ -162,7 +162,6 @@ class AgentEvaluationSystemLocal:
         # Inicializar variables para captura de errores
         run_status = "failed"
         agent_output = {}
-        thread_state = None
         error = None
         
         start_time = time.time()
@@ -529,7 +528,7 @@ class AgentEvaluationSystemLocal:
                 
             except NetworkError as e:
                 print(f"🌐 Error de red crítico evaluando {agent_name}: {e}")
-                print(f"💾 Checkpoints guardados para reanudar evaluación")
+                print("💾 Checkpoints guardados para reanudar evaluación")
                 # Continuar con otros agentes si es posible
                 all_results[agent_name] = []
             except Exception as e:
@@ -569,11 +568,11 @@ class AgentEvaluationSystemLocal:
             "evaluation_summary": evaluation_summary
         }
         
-        print(f"\n🎉 Evaluación LOCAL completada")
+        print("\n🎉 Evaluación LOCAL completada")
         print(f"⏱️  Tiempo total: {total_time:.2f}s")
         print(f"📊 Agentes evaluados: {len(agents_to_evaluate)}")
-        print(f"📈 Muestras procesadas: {len(dataset)}")
-        print(f"🛡️  Sistema de robustez de red usado: ✅")
+        print("📈 Muestras procesadas: {len(dataset)}")
+        print("🛡️  Sistema de robustez de red usado: ✅")
         
         return final_results
 

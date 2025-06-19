@@ -11,7 +11,7 @@ import statistics
 import time
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, Any, List, Optional, Tuple
+from typing import Dict, Any, List, Optional
 import json
 import numpy as np
 
@@ -77,11 +77,11 @@ class AgentEvaluationSystem:
         # Inicializar evaluador de ground truth
         self.ground_truth_evaluator = GroundTruthEvaluator()
         
-        print(f"🎯 Sistema de Evaluación inicializado")
+        print("🎯 Sistema de Evaluación inicializado")
         print(f"📊 Dataset: {dataset_path}")
         print(f"🤖 Agentes: {', '.join(self.agents)}")
         print(f"🔧 URL LangGraph: {langgraph_url}")
-        print(f"📈 Evaluación con Ground Truth: ACTIVADA")
+        print("📈 Evaluación con Ground Truth: ACTIVADA")
     
     def _capture_model_config(self) -> Dict[str, str]:
         """Capturar configuración actual de modelos desde variables de entorno"""
@@ -121,12 +121,12 @@ class AgentEvaluationSystem:
             if max_samples:
                 dataset = dataset[:max_samples]
                 
-            print(f"📊 Dataset cargado: {len(dataset)} muestras")
+            print("📊 Dataset cargado: {len(dataset)} muestras")
             
             # Verificar que todas las muestras tienen ground truth
             missing_gt = [i for i, sample in enumerate(dataset) if not sample.get("ground_truth_id")]
             if missing_gt:
-                print(f"⚠️  {len(missing_gt)} muestras sin ground_truth_id")
+                print("⚠️  {len(missing_gt)} muestras sin ground_truth_id")
             
             return dataset
             

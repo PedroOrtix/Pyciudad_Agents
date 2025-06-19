@@ -13,9 +13,7 @@ Sistema de Scoring:
 - No encontrado: 0.0 puntos
 """
 
-from typing import Dict, List, Any, Optional, Tuple
-import json
-from pathlib import Path
+from typing import Dict, List, Any, Optional
 
 
 class GroundTruthEvaluator:

@@ -1,4 +1,4 @@
-from typing import Optional, Dict, Any, List
+from typing import Dict, Any, List
 import json
 import random
 
@@ -6,9 +6,6 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 from pydantic import BaseModel, Field
 from typing import Literal
-
-# import pydantic models
-from agents.common.schemas import CandidateSchema
 
 # import custom states
 from data.Agent_dataset_generator.states_dataset import GraphStateInput, AgentState, GraphStateOutput

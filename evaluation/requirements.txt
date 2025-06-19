@@ -1,0 +1,21 @@
+# Dependencias para el Sistema de Evaluación de Agentes PyCiudad
+
+# SDK de LangGraph para conectarse al servicio local
+langgraph-sdk>=0.1.60
+
+# Análisis de datos y métricas
+pandas>=2.0.0
+numpy>=1.20.0
+
+# Visualizaciones y gráficos
+matplotlib>=3.5.0
+seaborn>=0.11.0
+
+# Utilidades adicionales para análisis
+scipy>=1.7.0  # Para estadísticas avanzadas
+
+# Para procesamiento de fechas y tiempo (ya incluido en pandas, pero explícito)
+python-dateutil>=2.8.0
+
+# Para manejo de archivos y rutas (estándar en Python 3.11+)
+pathlib 

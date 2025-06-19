@@ -69,3 +69,16 @@ coverage.xml
 
 # langgraph
 .langgraph*
+
+# Archivos de texto (excepto requirements.txt)
+*.txt
+!requirements.txt
+
+# Archivos de imagen PNG
+*.png
+
+# Archivos JSON
+*.json
+# Archivos Markdown (excepto README)
+*.md
+!README.md

@@ -8,7 +8,7 @@ para modelos locales y cambiantes.
 
 import os
 import json
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -27,7 +27,7 @@ def load_model_config() -> Dict[str, Any]:
     regular_model = os.getenv("OLLAMA_MODEL", "qwen3:30b-a3b")
     thinking_model = os.getenv("OLLAMA_MODEL_THINKING", "qwq:latest")
     
-    print(f"🔧 Modelos detectados desde .env:")
+    print("🔧 Modelos detectados desde .env:")
     print(f"   📝 Modelo regular: {regular_model}")
     print(f"   🧠 Modelo thinking: {thinking_model}")
     
@@ -195,7 +195,7 @@ def save_model_pricing_template():
         json.dump(template, f, indent=2)
     
     print(f"📄 Template de precios creado: {pricing_file}")
-    print(f"💡 Personaliza los precios según tus modelos y costos reales")
+    print("💡 Personaliza los precios según tus modelos y costos reales")
     
     return str(pricing_file)
 
@@ -211,7 +211,7 @@ def update_evaluation_config(results_metadata: Dict[str, Any]) -> Dict[str, Any]
     """
     
     config = load_model_config()
-    pricing = load_model_pricing()
+    load_model_pricing()
     
     # Agregar configuración actual a los metadatos
     results_metadata.update({

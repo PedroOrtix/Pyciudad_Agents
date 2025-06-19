@@ -378,22 +378,22 @@ async def run_evaluation_local_main(args):
         return True
     
     print("🚀 Iniciando evaluación LOCAL de agentes...")
-    print(f"📊 Configuración:")
+    print("📊 Configuración:")
     print(f"   - Muestras: {'Todo el dataset' if args.full_dataset else args.samples}")
     print(f"   - Concurrencia: {args.concurrent}")
-    print(f"   - Modo: EJECUCIÓN LOCAL (sin LangGraph server)")
+    print("   - Modo: EJECUCIÓN LOCAL (sin LangGraph server)")
     print(f"   - Agentes: {', '.join(args.agents)}")
     
     # Información de balanceo
     if not args.no_balance and args.balance_dataset:
-        print(f"⚖️  Configuración de balanceo:")
+        print("⚖️  Configuración de balanceo:")
         print(f"   - Estrategia: {args.balance_strategy}")
         print(f"   - Min samples por tipo: {args.min_samples_per_type}")
         print(f"   - Max samples por tipo: {args.max_samples_per_type}")
     else:
-        print(f"📋 Balanceo: DESACTIVADO (dataset original)")
+        print("📋 Balanceo: DESACTIVADO (dataset original)")
     
-    print(f"🛡️  Configuración de robustez de red:")
+    print("🛡️  Configuración de robustez de red:")
     print(f"   - Espera por conectividad: {args.network_wait} min")
     print(f"   - Máximo reintentos: {args.max_retries}")
     if args.resume_from:
@@ -405,7 +405,7 @@ async def run_evaluation_local_main(args):
         return False
     
     # Preparar dataset balanceado
-    print(f"\n📂 Procesando dataset: {args.dataset}")
+    print(f"\n📂 Procesando dataset: {args.dataset}\n")
     balanced_dataset = prepare_balanced_dataset(args.dataset, args)
     
     if not balanced_dataset:
@@ -437,9 +437,9 @@ async def run_evaluation_local_main(args):
         # Guardar resultados
         output_path = evaluator.save_results_local(results)
         
-        print(f"\n✅ Evaluación LOCAL completada exitosamente")
+        print("\n✅ Evaluación LOCAL completada exitosamente")
         print(f"💾 Resultados guardados en: {output_path}")
-        print(f"📊 Logs de red disponibles en: evaluation/network_resilience.log")
+        print("📊 Logs de red disponibles en: evaluation/network_resilience.log")
         
         return output_path
         
@@ -550,7 +550,7 @@ def print_summary(report, comparison_df):
         # Mostrar distribución por tier
         tier_dist = agent_data.get('tier_distribution', {})
         if tier_dist:
-            print(f"   📈 Distribución:")
+            print("   📈 Distribución:")
             for tier, count in tier_dist.items():
                 print(f"      - {tier}: {count}")
     

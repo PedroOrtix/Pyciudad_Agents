@@ -15,7 +15,6 @@ import argparse
 import asyncio
 import sys
 from pathlib import Path
-import json
 import numpy as np
 
 # Agregar el directorio raíz al path para importar módulos
@@ -138,7 +137,7 @@ async def run_evaluation(args):
     """Ejecutar evaluación de agentes"""
     
     print("🚀 Iniciando evaluación de agentes...")
-    print(f"📊 Configuración:")
+    print("📊 Configuración:")
     print(f"   - Muestras: {'Todo el dataset' if args.full_dataset else args.samples}")
     print(f"   - Concurrencia: {args.concurrent}")
     print(f"   - URL LangGraph: {args.url}")
@@ -169,7 +168,7 @@ async def run_evaluation(args):
         # Guardar resultados
         output_path = evaluator.save_results(results)
         
-        print(f"\n✅ Evaluación completada exitosamente")
+        print("\n✅ Evaluación completada exitosamente")
         print(f"💾 Resultados guardados en: {output_path}")
         
         return output_path
@@ -255,7 +254,7 @@ def print_summary(report, comparison_df):
     
     # Estadísticas generales
     general = report["general_statistics"]
-    print(f"📈 Estadísticas Generales:")
+    print("📈 Estadísticas Generales:")
     print(f"   • Total de ejecuciones: {general['total_executions']}")
     print(f"   • Agentes evaluados: {general['total_agents']}")
     print(f"   • Tiempo total: {general['total_execution_time']:.2f} segundos")
@@ -280,7 +279,7 @@ def print_summary(report, comparison_df):
     
     # Distribución de tiers de calidad
     if 'quality_distribution' in general:
-        print(f"\n📊 DISTRIBUCIÓN DE CALIDAD:")
+        print("\n📊 DISTRIBUCIÓN DE CALIDAD:")
         quality_dist = general['quality_distribution']
         total_samples = sum(quality_dist.values())
         for tier, count in quality_dist.items():
@@ -298,7 +297,7 @@ def print_summary(report, comparison_df):
             print(f"   • {tier_display}: {count} ({percentage:.1f}%)")
     
     # Comparación de agentes actualizada
-    print(f"\n🤖 COMPARACIÓN DE AGENTES (Con Métricas de Calidad):")
+    print("\n🤖 COMPARACIÓN DE AGENTES (Con Métricas de Calidad):")
     print("-" * 120)
     
     for _, row in comparison_df.iterrows():
@@ -338,7 +337,7 @@ def print_summary(report, comparison_df):
     # Análisis thinking vs regular actualizado
     if 'thinking_vs_regular_analysis' in report:
         thinking_analysis = report["thinking_vs_regular_analysis"]
-        print(f"\n🧠 COMPARACIÓN THINKING VS REGULAR (Con Calidad):")
+        print("\n🧠 COMPARACIÓN THINKING VS REGULAR (Con Calidad):")
         
         thinking_stats = thinking_analysis['agents_with_thinking']
         regular_stats = thinking_analysis['agents_without_thinking']
@@ -353,7 +352,7 @@ def print_summary(report, comparison_df):
                 print(f"  • Costo promedio: ${thinking_stats.get('avg_cost_per_query', 0):.4f}")
                 print(f"  • Tiempo promedio: {thinking_stats.get('avg_execution_time', 0):.2f}s")
             else:
-                print(f"  • No hay datos disponibles")
+                print("  • No hay datos disponibles")
             
             print(f"Agentes sin thinking: {regular_stats['count']}")
             if regular_stats['count'] > 0:
@@ -382,11 +381,11 @@ def print_summary(report, comparison_df):
                     print(f"   • ROI calidad: {roi_quality:.2f} puntos por $")
                     print(f"   • ROI éxito: {roi_success:.2f} pp de éxito por $")
         else:
-            print(f"  • No hay datos suficientes para comparación")
+            print("  • No hay datos suficientes para comparación")
     
     # Análisis por dificultad si está disponible
     if 'difficulty_level_analysis' in report and report['difficulty_level_analysis']:
-        print(f"\n📈 ANÁLISIS POR NIVEL DE DIFICULTAD:")
+        print("\n📈 ANÁLISIS POR NIVEL DE DIFICULTAD:")
         difficulty_analysis = report['difficulty_level_analysis']
         
         for difficulty, stats in difficulty_analysis.items():
@@ -396,14 +395,14 @@ def print_summary(report, comparison_df):
             print(f"    • Score calidad: {stats['average_quality_score']:.3f}")
             print(f"    • Perfect rate: {stats['perfect_rate']:.2%}")
     
-    print(f"\n📋 NUEVA DEFINICIÓN DE ÉXITO:")
-    print(f"   ✅ Éxito = Ejecución técnica exitosa AND Score de calidad > 0.0")
-    print(f"   📊 Sistema de scoring por posición:")
-    print(f"      • Posición 1: 1.0 puntos")
-    print(f"      • Posiciones 1-3: 0.8 puntos") 
-    print(f"      • Posiciones 1-5: 0.6 puntos")
-    print(f"      • Más de 5 posiciones: 0.3 puntos")
-    print(f"      • No encontrado: 0.0 puntos")
+    print("\n📋 NUEVA DEFINICIÓN DE ÉXITO:")
+    print("   ✅ Éxito = Ejecución técnica exitosa AND Score de calidad > 0.0")
+    print("   📊 Sistema de scoring por posición:")
+    print("      • Posición 1: 1.0 puntos")
+    print("      • Posiciones 1-3: 0.8 puntos") 
+    print("      • Posiciones 1-5: 0.6 puntos")
+    print("      • Más de 5 posiciones: 0.3 puntos")
+    print("      • No encontrado: 0.0 puntos")
     
     print("\n" + "="*120)
 

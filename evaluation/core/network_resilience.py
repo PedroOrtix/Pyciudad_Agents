@@ -22,19 +22,17 @@ import time
 import json
 import logging
 from pathlib import Path
-from datetime import datetime, timedelta
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from datetime import datetime
+from typing import Any, Callable, Dict, Optional
 import functools
 import socket
 import requests
 from requests.exceptions import (
     ConnectionError, 
     Timeout, 
-    HTTPError, 
     RequestException
 )
-from httpx import ConnectError, TimeoutException, HTTPStatusError
-import httpx
+from httpx import ConnectError, TimeoutException
 
 # Configurar logging específico para problemas de red
 logger = logging.getLogger("network_resilience")

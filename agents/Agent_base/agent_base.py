@@ -4,7 +4,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langgraph.graph import StateGraph, START, END
 
 # Importar modelos Pydantic
-from agents.common.schemas import NormalizedQueryKeywords, CartoCiudadQuerySchema, CandidateSchema, RerankSchema, RerankOrderSchema
+from agents.common.schemas import NormalizedQueryKeywords, CartoCiudadQuerySchema, CandidateSchema, RerankOrderSchema
 
 # Importar estados personalizados
 from agents.Agent_base.states_base import GraphStateInput, AgentState, GraphStateOutput

@@ -7,7 +7,7 @@ from langgraph.graph import StateGraph, START, END
 from agents.Agent_base.agent_base import app_base
 
 # Importar modelos Pydantic
-from agents.common.schemas import CartoCiudadQuerySchema, CandidateSchema, ValidationOutput, RerankSchema, RerankOrderSchema
+from agents.common.schemas import CartoCiudadQuerySchema, CandidateSchema, ValidationOutput, RerankOrderSchema
 
 # Importar estados personalizados
 from agents.Agent_validation.states_validation import GraphStateInput, AgentState, GraphStateOutput
