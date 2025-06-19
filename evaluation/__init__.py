@@ -16,7 +16,6 @@ NUEVA FUNCIONALIDAD:
 # Core evaluation system
 from evaluation.core.agent_evaluation_system import AgentEvaluationSystem
 
-# Ground truth evaluation (NUEVO)
 from evaluation.core.ground_truth_evaluator import (
     GroundTruthEvaluator, 
     evaluate_single_execution
@@ -45,10 +44,6 @@ __all__ = [
     # Ground truth evaluation (NUEVO)
     "GroundTruthEvaluator",
     "evaluate_single_execution",
-    
-    # Analysis - TODO: Implementar
-    # "MetricsAnalyzer",  # TODO: Implementar
-    # "ComprehensiveModelComparator",  # TODO: Implementar
     
     # Configuration
     "get_agent_model_config",

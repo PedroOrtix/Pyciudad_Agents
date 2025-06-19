@@ -330,14 +330,14 @@ class AgentAnalysisPlotter:
     
     def generate_comparison_plots(self):
         """
-        Genera todos los plots de comparación entre agentes.
+        Genera plots de comparación entre agentes.
         
         Plots generados:
         1. Barras agrupadas de métricas principales
-        2. Análisis Thinking vs Non-Thinking
-        3. Trade-off Quality vs Speed
-        4. Distribución de tiers de calidad
-        5. Heatmap de rendimiento relativo
+        2. Distribución de tiers de calidad
+        3. Heatmap de rendimiento relativo
+        4. Radar chart multimétrico
+        5. Pareto frontier analysis
         """
         print("\n🔄 Generando plots de comparación entre agentes...")
         comparison_dir = self.plots_dir / "comparisons"
@@ -352,18 +352,18 @@ class AgentAnalysisPlotter:
         # 1. PLOT: Métricas principales por agente (Barras agrupadas)
         self._plot_main_metrics_comparison(agents_data, comparison_dir)
         
-        # 2. PLOT: Análisis Thinking vs Non-Thinking
-        self._plot_thinking_vs_regular(comparison_dir)
-        
-        # 3. PLOT: Trade-off Quality vs Speed
-        self._plot_quality_speed_tradeoff(agents_data, comparison_dir)
-        
-        # 4. PLOT: Distribución de calidad (si hay datos detallados)
+        # 2. PLOT: Distribución de calidad (si hay datos detallados)
         if self.raw_data.get('results_by_agent'):
             self._plot_quality_distribution(comparison_dir)
         
-        # 5. PLOT: Heatmap de rendimiento relativo
+        # 3. PLOT: Heatmap de rendimiento relativo
         self._plot_performance_heatmap(agents_data, comparison_dir)
+        
+        # 4. PLOT: Radar chart multimétrico
+        self._plot_radar_chart(agents_data, comparison_dir)
+        
+        # 5. PLOT: Pareto frontier analysis
+        self._plot_pareto_frontier(agents_data, comparison_dir)
         
         print("   ✅ Plots de comparación generados en /plots/comparisons/")
     
@@ -430,180 +430,6 @@ class AgentAnalysisPlotter:
         """
         
         with open(output_dir / "01_main_metrics_comparison_DOC.txt", "w") as f:
-            f.write(doc_text)
-    
-    def _plot_thinking_vs_regular(self, output_dir: Path):
-        """
-        PLOT 2: Análisis Thinking vs Non-Thinking
-        
-        Propósito: Comparar el impacto de usar modelos de reasoning vs regulares
-        """
-        thinking_data = self.calculated_stats.get('thinking_vs_regular_analysis', {})
-        
-        if not thinking_data:
-            print("   ⚠️  No hay datos de thinking vs regular")
-            return
-        
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        
-        categories = ['Con Thinking', 'Sin Thinking']
-        with_thinking = thinking_data.get('agents_with_thinking', {})
-        without_thinking = thinking_data.get('agents_without_thinking', {})
-        
-        # Subplot 1: Success Rate
-        success_rates = [
-            with_thinking.get('combined_success_rate', 0),
-            without_thinking.get('combined_success_rate', 0)
-        ]
-        bars1 = ax1.bar(categories, success_rates, color=['#e74c3c', '#3498db'], alpha=0.7)
-        ax1.set_title('Success Rate: Thinking vs Regular', fontweight='bold')
-        ax1.set_ylabel('Combined Success Rate')
-        for bar, value in zip(bars1, success_rates):
-            ax1.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
-                    f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
-        
-        # Subplot 2: Quality Score
-        quality_scores = [
-            with_thinking.get('average_quality_score', 0),
-            without_thinking.get('average_quality_score', 0)
-        ]
-        bars2 = ax2.bar(categories, quality_scores, color=['#e74c3c', '#3498db'], alpha=0.7)
-        ax2.set_title('Quality Score: Thinking vs Regular', fontweight='bold')
-        ax2.set_ylabel('Average Quality Score')
-        for bar, value in zip(bars2, quality_scores):
-            ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
-                    f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
-        
-        # Subplot 3: Execution Time
-        exec_times = [
-            with_thinking.get('avg_execution_time', 0),
-            without_thinking.get('avg_execution_time', 0)
-        ]
-        bars3 = ax3.bar(categories, exec_times, color=['#e74c3c', '#3498db'], alpha=0.7)
-        ax3.set_title('Tiempo de Ejecución: Thinking vs Regular', fontweight='bold')
-        ax3.set_ylabel('Tiempo promedio (segundos)')
-        for bar, value in zip(bars3, exec_times):
-            ax3.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.5,
-                    f'{value:.1f}s', ha='center', va='bottom', fontweight='bold')
-        
-        # Subplot 4: Perfect Rate
-        perfect_rates = [
-            with_thinking.get('perfect_rate', 0),
-            without_thinking.get('perfect_rate', 0)
-        ]
-        bars4 = ax4.bar(categories, perfect_rates, color=['#e74c3c', '#3498db'], alpha=0.7)
-        ax4.set_title('Perfect Rate: Thinking vs Regular', fontweight='bold')
-        ax4.set_ylabel('Perfect Rate')
-        for bar, value in zip(bars4, perfect_rates):
-            ax4.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
-                    f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
-        
-        plt.suptitle('🧠 Análisis: Modelos con Thinking vs Regulares\n' + 
-                    'Comparación de rendimiento y eficiencia', fontsize=16, fontweight='bold')
-        plt.tight_layout()
-        plt.savefig(output_dir / "02_thinking_vs_regular_analysis.png", dpi=300, bbox_inches='tight')
-        plt.close()
-        
-        # Documentación
-        doc_text = f"""
-        🧠 PLOT: Análisis Thinking vs Regular
-        
-        QUÉ MUESTRA:
-        Comparación directa entre agentes que usan modelos de reasoning vs regulares
-        
-        DATOS CLAVE ENCONTRADOS:
-        - Con Thinking: {with_thinking.get('count', 0)} agente(s)
-        - Sin Thinking: {without_thinking.get('count', 0)} agente(s)
-        - Diferencia en tiempo: {exec_times[0]/exec_times[1]:.1f}x más lento el thinking
-        - Diferencia en success: {(success_rates[0]-success_rates[1])*100:+.1f}% el thinking
-        
-        INTERPRETACIÓN:
-        - Si barras rojas > azules: Thinking es mejor
-        - Si barras azules > rojas: Regular es mejor
-        - Notar el trade-off tiempo vs calidad
-        
-        INSIGHTS PARA PRESENTACIÓN:
-        - ¿Vale la pena el tiempo extra del thinking?
-        - ¿En qué escenarios usarías cada tipo?
-        """
-        
-        with open(output_dir / "02_thinking_vs_regular_analysis_DOC.txt", "w") as f:
-            f.write(doc_text)
-    
-    def _plot_quality_speed_tradeoff(self, agents_data: Dict, output_dir: Path):
-        """
-        PLOT 3: Trade-off Quality vs Speed
-        
-        Propósito: Visualizar la relación entre calidad y velocidad de respuesta
-        """
-        fig, ax = plt.subplots(figsize=(12, 8))
-        
-        agents = []
-        quality_scores = []
-        exec_times = []
-        success_rates = []
-        
-        for agent, data in agents_data.items():
-            agents.append(agent.replace('agent_', '').title())
-            quality_scores.append(data.get('average_quality_score', 0))
-            exec_times.append(data.get('avg_execution_time', 0))
-            success_rates.append(data.get('combined_success_rate', 0))
-        
-        # Scatter plot con tamaño basado en success rate
-        scatter = ax.scatter(exec_times, quality_scores, 
-                           s=[rate * 500 for rate in success_rates],  # Tamaño proporcional
-                           alpha=0.7, c=range(len(agents)), cmap='viridis')
-        
-        # Etiquetas para cada punto
-        for i, agent in enumerate(agents):
-            ax.annotate(agent, (exec_times[i], quality_scores[i]), 
-                       xytext=(5, 5), textcoords='offset points',
-                       fontweight='bold', fontsize=11)
-        
-        ax.set_xlabel('Tiempo de Ejecución Promedio (segundos)', fontweight='bold')
-        ax.set_ylabel('Quality Score Promedio', fontweight='bold')
-        ax.set_title('⚡ Trade-off: Calidad vs Velocidad de Respuesta\n' +
-                    'Tamaño del punto = Success Rate', fontweight='bold', pad=20)
-        ax.grid(True, alpha=0.3)
-        
-        # Añadir líneas de referencia
-        ax.axhline(y=np.mean(quality_scores), color='red', linestyle='--', alpha=0.5, 
-                  label=f'Calidad promedio: {np.mean(quality_scores):.3f}')
-        ax.axvline(x=np.mean(exec_times), color='blue', linestyle='--', alpha=0.5,
-                  label=f'Tiempo promedio: {np.mean(exec_times):.1f}s')
-        
-        ax.legend()
-        
-        plt.tight_layout()
-        plt.savefig(output_dir / "03_quality_speed_tradeoff.png", dpi=300, bbox_inches='tight')
-        plt.close()
-        
-        # Documentación
-        doc_text = """
-        ⚡ PLOT: Trade-off Calidad vs Velocidad
-        
-        QUÉ MUESTRA:
-        - Eje X: Tiempo de ejecución (más derecha = más lento)
-        - Eje Y: Quality score (más arriba = mejor calidad)
-        - Tamaño punto: Success rate (más grande = más exitoso)
-        
-        ZONAS DEL GRÁFICO:
-        - Arriba-Izquierda: IDEAL (rápido y bueno)
-        - Arriba-Derecha: Bueno pero lento
-        - Abajo-Izquierda: Rápido pero malo
-        - Abajo-Derecha: PEOR (lento y malo)
-        
-        INTERPRETACIÓN:
-        - Buscar puntos en esquina superior izquierda
-        - Las líneas de referencia dividen en cuadrantes
-        - Puntos grandes indican agentes más confiables
-        
-        USO EN PRESENTACIÓN:
-        - Mostrar que no siempre "más lento = mejor"
-        - Identificar el agente con mejor balance
-        """
-        
-        with open(output_dir / "03_quality_speed_tradeoff_DOC.txt", "w") as f:
             f.write(doc_text)
     
     def _plot_quality_distribution(self, output_dir: Path):
@@ -958,11 +784,9 @@ class AgentAnalysisPlotter:
         """
         Genera plots específicos avanzados para cada agente.
         
-        Nuevos plots incluyen:
-        1. Violin plots de distribuciones
-        2. Análisis temporal detallado
-        3. Análisis de tipos de query
-        4. Patrones de fallo específicos
+        Plots incluyen:
+        1. Análisis de tipos de query
+        2. Patrones de fallo específicos
         """
         print("\n🎯 Generando plots específicos avanzados por agente...")
         
@@ -975,142 +799,11 @@ class AgentAnalysisPlotter:
             agent_dir = self.plots_dir / agent
             agent_dir.mkdir(exist_ok=True)
             
-            # Plot 1: Violin plots de distribuciones
-            self._plot_violin_distributions(agent, results, agent_dir)
-            
-            # Plot 2: Análisis temporal
-            self._plot_temporal_analysis(agent, results, agent_dir)
-            
-            # Plot 3: Análisis por tipos de query
+            # Plot 1: Análisis por tipos de query
             self._plot_query_type_analysis(agent, results, agent_dir)
             
-            # Plot 4: Análisis de patrones de fallo
+            # Plot 2: Análisis de patrones de fallo
             self._plot_failure_patterns(agent, results, agent_dir)
-    
-    def _plot_violin_distributions(self, agent_name: str, results: List[Dict], output_dir: Path):
-        """
-        PLOT ESPECÍFICO 1: Violin plots de distribuciones completas
-        """
-        # Extraer datos
-        execution_times = [r.get('execution_time_seconds', 0) for r in results if r.get('execution_time_seconds')]
-        quality_scores = [r.get('quality_score', 0) for r in results]
-        
-        if not execution_times or not quality_scores:
-            return
-        
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
-        
-        # Violin plot de tiempos
-        parts1 = ax1.violinplot([execution_times], positions=[1], widths=0.6, showmeans=True, showmedians=True)
-        ax1.set_title('🎻 Distribución Completa: Tiempos de Ejecución', fontweight='bold')
-        ax1.set_ylabel('Tiempo (segundos)')
-        ax1.set_xticks([1])
-        ax1.set_xticklabels([agent_name.replace('agent_', '').title()])
-        ax1.grid(True, alpha=0.3)
-        
-        # Añadir estadísticas
-        mean_time = np.mean(execution_times)
-        median_time = np.median(execution_times)
-        std_time = np.std(execution_times)
-        ax1.text(1.3, mean_time, f'Media: {mean_time:.2f}s\nMediana: {median_time:.2f}s\nStd: {std_time:.2f}s', 
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
-        
-        # Violin plot de quality scores
-        parts2 = ax2.violinplot([quality_scores], positions=[1], widths=0.6, showmeans=True, showmedians=True)
-        ax2.set_title('🎻 Distribución Completa: Quality Scores', fontweight='bold')
-        ax2.set_ylabel('Quality Score (0-1)')
-        ax2.set_xticks([1])
-        ax2.set_xticklabels([agent_name.replace('agent_', '').title()])
-        ax2.grid(True, alpha=0.3)
-        
-        # Añadir estadísticas
-        mean_quality = np.mean(quality_scores)
-        median_quality = np.median(quality_scores)
-        std_quality = np.std(quality_scores)
-        ax2.text(1.3, mean_quality, f'Media: {mean_quality:.3f}\nMediana: {median_quality:.3f}\nStd: {std_quality:.3f}', 
-                bbox=dict(boxstyle="round,pad=0.3", facecolor="lightgreen", alpha=0.7))
-        
-        plt.suptitle(f'📊 Análisis de Distribuciones: {agent_name.replace("agent_", "").title()}\n' +
-                    'Violin plots muestran la forma completa de las distribuciones', fontweight='bold', fontsize=14)
-        plt.tight_layout()
-        plt.savefig(output_dir / f"{agent_name}_violin_distributions.png", dpi=300, bbox_inches='tight')
-        plt.close()
-    
-    def _plot_temporal_analysis(self, agent_name: str, results: List[Dict], output_dir: Path):
-        """
-        PLOT ESPECÍFICO 2: Análisis temporal detallado
-        """
-        # Extraer datos temporales
-        timestamps = []
-        success_values = []
-        quality_scores = []
-        execution_times = []
-        
-        for r in results:
-            if 'timestamp' in r:
-                timestamps.append(pd.to_datetime(r['timestamp']))
-                success_values.append(1 if r.get('combined_success', False) else 0)
-                quality_scores.append(r.get('quality_score', 0))
-                execution_times.append(r.get('execution_time_seconds', 0))
-        
-        if not timestamps:
-            return
-        
-        # Crear DataFrame para análisis temporal
-        df = pd.DataFrame({
-            'timestamp': timestamps,
-            'success': success_values,
-            'quality': quality_scores,
-            'exec_time': execution_times
-        }).sort_values('timestamp')
-        
-        # Calcular rolling averages
-        window_size = max(5, len(df) // 10)  # Ventana adaptativa
-        df['success_rolling'] = df['success'].rolling(window=window_size, min_periods=1).mean()
-        df['quality_rolling'] = df['quality'].rolling(window=window_size, min_periods=1).mean()
-        df['time_rolling'] = df['exec_time'].rolling(window=window_size, min_periods=1).mean()
-        
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        
-        # Plot 1: Success rate temporal
-        ax1.scatter(df['timestamp'], df['success'], alpha=0.5, s=30, color='blue', label='Éxitos individuales')
-        ax1.plot(df['timestamp'], df['success_rolling'], color='red', linewidth=2, label=f'Media móvil (ventana={window_size})')
-        ax1.set_title('📈 Evolución Temporal: Success Rate', fontweight='bold')
-        ax1.set_ylabel('Success (0/1)')
-        ax1.legend()
-        ax1.grid(True, alpha=0.3)
-        
-        # Plot 2: Quality score temporal
-        ax2.scatter(df['timestamp'], df['quality'], alpha=0.5, s=30, color='green', label='Quality individual')
-        ax2.plot(df['timestamp'], df['quality_rolling'], color='darkgreen', linewidth=2, label=f'Media móvil (ventana={window_size})')
-        ax2.set_title('📈 Evolución Temporal: Quality Score', fontweight='bold')
-        ax2.set_ylabel('Quality Score')
-        ax2.legend()
-        ax2.grid(True, alpha=0.3)
-        
-        # Plot 3: Execution time temporal
-        ax3.scatter(df['timestamp'], df['exec_time'], alpha=0.5, s=30, color='orange', label='Tiempo individual')
-        ax3.plot(df['timestamp'], df['time_rolling'], color='darkorange', linewidth=2, label=f'Media móvil (ventana={window_size})')
-        ax3.set_title('📈 Evolución Temporal: Tiempo de Ejecución', fontweight='bold')
-        ax3.set_ylabel('Tiempo (segundos)')
-        ax3.legend()
-        ax3.grid(True, alpha=0.3)
-        
-        # Plot 4: Distribución por hora
-        df['hour'] = df['timestamp'].dt.hour
-        hourly_success = df.groupby('hour')['success'].mean()
-        if len(hourly_success) > 1:
-            ax4.bar(hourly_success.index, hourly_success.values, alpha=0.7, color='purple')
-            ax4.set_title('📊 Rendimiento por Hora del Día', fontweight='bold')
-            ax4.set_xlabel('Hora del día')
-            ax4.set_ylabel('Success Rate promedio')
-            ax4.grid(True, alpha=0.3)
-        
-        plt.suptitle(f'⏰ Análisis Temporal: {agent_name.replace("agent_", "").title()}\n' +
-                    'Patrones de rendimiento a lo largo del tiempo', fontweight='bold', fontsize=14)
-        plt.tight_layout()
-        plt.savefig(output_dir / f"{agent_name}_temporal_analysis.png", dpi=300, bbox_inches='tight')
-        plt.close()
     
     def _plot_query_type_analysis(self, agent_name: str, results: List[Dict], output_dir: Path):
         """
@@ -1213,66 +906,93 @@ class AgentAnalysisPlotter:
             print(f"   ⚠️  {agent_name} no tiene fallos para analizar")
             return
         
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
+        # Reorganizado: Solo 2 plots horizontales
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
         
-        # Plot 1: Distribución de quality scores en fallos vs éxitos
+        # Plot 1: Comparación Quality Score y Tiempo entre éxitos y fallos
         success_qualities = [r.get('quality_score', 0) for r in successes]
         failure_qualities = [r.get('quality_score', 0) for r in failures]
+        success_times = [r.get('execution_time_seconds', 0) for r in successes if r.get('execution_time_seconds')]
+        failure_times = [r.get('execution_time_seconds', 0) for r in failures if r.get('execution_time_seconds')]
         
-        ax1.hist([success_qualities, failure_qualities], bins=10, alpha=0.7, 
-                label=['Éxitos', 'Fallos'], color=['green', 'red'])
-        ax1.set_title('📊 Distribución Quality Score: Éxitos vs Fallos', fontweight='bold')
-        ax1.set_xlabel('Quality Score')
-        ax1.set_ylabel('Frecuencia')
-        ax1.legend()
+        # Box plots combinados
+        if success_qualities:
+            bp1 = ax1.boxplot([success_qualities, failure_qualities], 
+                             labels=['Éxitos', 'Fallos'], 
+                             positions=[1, 2], 
+                             patch_artist=True,
+                             widths=0.6)
+            bp1['boxes'][0].set_facecolor('#27ae60')
+            bp1['boxes'][0].set_alpha(0.7)
+            bp1['boxes'][1].set_facecolor('#e74c3c')
+            bp1['boxes'][1].set_alpha(0.7)
+        
+        ax1.set_title('📊 Quality Score: Éxitos vs Fallos', fontweight='bold')
+        ax1.set_ylabel('Quality Score')
         ax1.grid(True, alpha=0.3)
         
-        # Plot 2: Tiempo gastado en éxitos vs fallos
-        success_times = [r.get('execution_time_seconds', 0) for r in successes]
-        failure_times = [r.get('execution_time_seconds', 0) for r in failures]
+        # Añadir estadísticas en el plot
+        if success_qualities and failure_qualities:
+            success_mean = np.mean(success_qualities)
+            failure_mean = np.mean(failure_qualities)
+            ax1.text(0.5, 0.95, 
+                    f'Media Éxitos: {success_mean:.3f}\nMedia Fallos: {failure_mean:.3f}\nDiferencia: {success_mean - failure_mean:.3f}',
+                    transform=ax1.transAxes, ha='center', va='top',
+                    bbox=dict(boxstyle="round,pad=0.3", facecolor="lightblue", alpha=0.7))
         
-        box_data = [success_times, failure_times] if success_times else [failure_times]
-        box_labels = ['Éxitos', 'Fallos'] if success_times else ['Fallos']
-        
-        bp = ax2.boxplot(box_data, labels=box_labels, patch_artist=True)
-        bp['boxes'][0].set_facecolor('green' if success_times else 'red')
-        if len(bp['boxes']) > 1:
-            bp['boxes'][1].set_facecolor('red')
-        
-        ax2.set_title('📊 Tiempo de Ejecución: Éxitos vs Fallos', fontweight='bold')
-        ax2.set_ylabel('Tiempo (segundos)')
-        ax2.grid(True, alpha=0.3)
-        
-        # Plot 3: Tipos de fallo por dificultad
+        # Plot 2: Análisis de fallos por dificultad y candidates
         failure_by_difficulty = {}
+        failure_candidates = []
+        
         for f in failures:
             difficulty = f.get('dataset_info', {}).get('difficulty_level', 'unknown')
             failure_by_difficulty[difficulty] = failure_by_difficulty.get(difficulty, 0) + 1
+            
+            candidates = f.get('total_candidates', 0)
+            failure_candidates.append(candidates)
         
-        if failure_by_difficulty:
+        # Crear subplot dividido
+        if failure_by_difficulty and len(failure_by_difficulty) > 1:
+            # Pie chart de dificultad (lado izquierdo)
             difficulties = list(failure_by_difficulty.keys())
             counts = list(failure_by_difficulty.values())
-            colors = plt.cm.Reds(np.linspace(0.4, 0.8, len(difficulties)))
+            colors_pie = plt.cm.Reds(np.linspace(0.4, 0.8, len(difficulties)))
             
-            wedges, texts, autotexts = ax3.pie(counts, labels=difficulties, autopct='%1.1f%%',
-                                             colors=colors, startangle=90)
-            ax3.set_title('📊 Distribución de Fallos por Dificultad', fontweight='bold')
-        
-        # Plot 4: Candidates encontrados en fallos
-        failure_candidates = [r.get('total_candidates', 0) for r in failures]
-        
-        ax4.hist(failure_candidates, bins=max(5, len(set(failure_candidates))), 
-                alpha=0.7, color='red', edgecolor='black')
-        ax4.set_title('📊 Candidates Encontrados en Fallos', fontweight='bold')
-        ax4.set_xlabel('Número de Candidates')
-        ax4.set_ylabel('Frecuencia')
-        ax4.grid(True, alpha=0.3)
-        
-        # Añadir estadística
-        mean_candidates = np.mean(failure_candidates) if failure_candidates else 0
-        ax4.axvline(mean_candidates, color='darkred', linestyle='--', 
-                   label=f'Media: {mean_candidates:.1f}')
-        ax4.legend()
+            # Usar la mitad izquierda para el pie chart
+            ax2_left = plt.subplot(1, 4, 3)
+            wedges, texts, autotexts = ax2_left.pie(counts, labels=difficulties, autopct='%1.1f%%',
+                                                   colors=colors_pie, startangle=90)
+            ax2_left.set_title('Fallos por\nDificultad', fontweight='bold', fontsize=10)
+            
+            # Usar la mitad derecha para el histograma
+            ax2_right = plt.subplot(1, 4, 4)
+            if failure_candidates:
+                ax2_right.hist(failure_candidates, bins=max(5, len(set(failure_candidates))), 
+                              alpha=0.7, color='red', edgecolor='black')
+                ax2_right.set_title('Candidates en\nFallos', fontweight='bold', fontsize=10)
+                ax2_right.set_xlabel('Número de Candidates')
+                ax2_right.set_ylabel('Frecuencia')
+                ax2_right.grid(True, alpha=0.3)
+                
+                # Añadir estadística
+                mean_candidates = np.mean(failure_candidates)
+                ax2_right.axvline(mean_candidates, color='darkred', linestyle='--', 
+                                 label=f'Media: {mean_candidates:.1f}')
+                ax2_right.legend()
+        else:
+            # Si no hay suficientes datos de dificultad, solo mostrar candidates
+            if failure_candidates:
+                ax2.hist(failure_candidates, bins=max(5, len(set(failure_candidates))), 
+                        alpha=0.7, color='red', edgecolor='black')
+                ax2.set_title('📊 Candidates Encontrados en Fallos', fontweight='bold')
+                ax2.set_xlabel('Número de Candidates')
+                ax2.set_ylabel('Frecuencia')
+                ax2.grid(True, alpha=0.3)
+                
+                mean_candidates = np.mean(failure_candidates) if failure_candidates else 0
+                ax2.axvline(mean_candidates, color='darkred', linestyle='--', 
+                           label=f'Media: {mean_candidates:.1f}')
+                ax2.legend()
         
         plt.suptitle(f'❌ Análisis de Patrones de Fallo: {agent_name.replace("agent_", "").title()}\n' +
                     f'Total fallos: {len(failures)} de {len(results)} queries ({len(failures)/len(results)*100:.1f}%)', 
@@ -1287,11 +1007,9 @@ class AgentAnalysisPlotter:
         """
         Genera plots comparativos avanzados entre agentes.
         
-        Nuevos plots incluyen:
+        Plots incluyen:
         1. Radar chart multimétrico
         2. Pareto frontier analysis
-        3. Statistical significance matrix
-        4. Clustering de agentes
         """
         print("\n🏆 Generando plots comparativos avanzados...")
         comparison_dir = self.plots_dir / "comparisons"
@@ -1308,12 +1026,6 @@ class AgentAnalysisPlotter:
         
         # Plot 2: Pareto frontier analysis
         self._plot_pareto_frontier(agents_data, comparison_dir)
-        
-        # Plot 3: Statistical significance matrix
-        self._plot_statistical_significance(comparison_dir)
-        
-        # Plot 4: Clustering de agentes
-        self._plot_agent_clustering(agents_data, comparison_dir)
         
         print("   ✅ Plots comparativos avanzados generados")
     
@@ -1474,234 +1186,542 @@ class AgentAnalysisPlotter:
         with open(output_dir / "07_pareto_frontier_DOC.txt", "w") as f:
             f.write(doc_text)
     
-    def _plot_statistical_significance(self, output_dir: Path):
+    def generate_error_difficulty_analysis(self):
         """
-        PLOT COMPARATIVO 3: Matriz de significancia estadística
+        Genera análisis específicos de errores y dificultad para cada agente.
+        
+        Nuevos plots incluyen:
+        1. Rendimiento por errores vs consultas limpias
+        2. Impacto del nivel de dificultad
+        3. Análisis detallado de tipos de errores específicos
+        4. Comparación de robustez ante errores por agente
         """
-        if not ADVANCED_ANALYSIS_AVAILABLE:
-            print("   ⚠️  Análisis estadístico no disponible (falta scipy)")
+        print("\n🧪 Generando análisis específico de errores y dificultad...")
+        
+        if not self.raw_data.get('results_by_agent'):
+            print("   ⚠️  No hay datos detallados para análisis de errores")
             return
+        
+        for agent, results in self.raw_data['results_by_agent'].items():
+            print(f"   └── Procesando análisis de errores para {agent}...")
+            agent_dir = self.plots_dir / agent
+            agent_dir.mkdir(exist_ok=True)
             
+            # Plot 1: Errores vs Limpias
+            self._plot_errors_vs_clean_analysis(agent, results, agent_dir)
+            
+            # Plot 2: Impacto de dificultad
+            self._plot_difficulty_impact_analysis(agent, results, agent_dir)
+            
+            # Plot 3: Tipos de errores específicos
+            self._plot_specific_error_types_analysis(agent, results, agent_dir)
+        
+        # Plot 4: Comparación de robustez entre agentes
+        comparison_dir = self.plots_dir / "comparisons"
+        comparison_dir.mkdir(exist_ok=True)
+        self._plot_error_robustness_comparison(comparison_dir)
+    
+    def _plot_errors_vs_clean_analysis(self, agent_name: str, results: List[Dict], output_dir: Path):
+        """
+        PLOT ESPECÍFICO: Análisis de rendimiento con errores vs consultas limpias
+        """
+        # Separar resultados por errores vs limpias
+        clean_results = []
+        error_results = []
+        
+        for r in results:
+            dataset_info = r.get('dataset_info', {})
+            has_errors = dataset_info.get('has_errors', False)
+            
+            if has_errors:
+                error_results.append(r)
+            else:
+                clean_results.append(r)
+        
+        if not clean_results or not error_results:
+            print(f"   ⚠️  {agent_name}: No hay suficientes datos para comparar errores vs limpias")
+            return
+        
+        # Reorganizado: Solo 2 plots horizontales
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        
+        # Plot 1: Success rate comparison + Quality score comparison
+        clean_success = sum(1 for r in clean_results if r.get('combined_success', False)) / len(clean_results)
+        error_success = sum(1 for r in error_results if r.get('combined_success', False)) / len(error_results)
+        
+        clean_quality = np.mean([r.get('quality_score', 0) for r in clean_results])
+        error_quality = np.mean([r.get('quality_score', 0) for r in error_results])
+        
+        categories = ['Success Rate', 'Quality Score']
+        clean_values = [clean_success, clean_quality]
+        error_values = [error_success, error_quality]
+        
+        x = np.arange(len(categories))
+        width = 0.35
+        
+        bars1 = ax1.bar(x - width/2, clean_values, width, label='Consultas Limpias', 
+                       color='#27ae60', alpha=0.7)
+        bars2 = ax1.bar(x + width/2, error_values, width, label='Consultas con Errores', 
+                       color='#e74c3c', alpha=0.7)
+        
+        ax1.set_title('📊 Comparación: Limpias vs Con Errores', fontweight='bold')
+        ax1.set_ylabel('Valor de la Métrica')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(categories)
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Añadir valores en las barras
+        for bars, values in zip([bars1, bars2], [clean_values, error_values]):
+            for bar, value in zip(bars, values):
+                ax1.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
+                        f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
+        
+        # Añadir diferencias
+        success_diff = (clean_success - error_success) * 100
+        quality_diff = (clean_quality - error_quality) * 100
+        ax1.text(0.5, 0.9, f'Diferencias:\nSuccess: {success_diff:+.1f}%\nQuality: {quality_diff:+.1f}%', 
+                transform=ax1.transAxes, ha='center', fontsize=10, 
+                bbox=dict(boxstyle="round,pad=0.3", facecolor="yellow", alpha=0.7))
+        
+        # Plot 2: Distribución de tiers comparativa
+        def get_tier_distribution(results_list):
+            tiers = {'perfect': 0, 'top_3': 0, 'top_5': 0, 'found_far': 0, 'not_found': 0}
+            for r in results_list:
+                tier = r.get('scoring_tier', 'not_found')
+                if tier in tiers:
+                    tiers[tier] += 1
+            total = sum(tiers.values())
+            return {k: v/total*100 if total > 0 else 0 for k, v in tiers.items()}
+        
+        clean_tiers = get_tier_distribution(clean_results)
+        error_tiers = get_tier_distribution(error_results)
+        
+        tier_names = list(clean_tiers.keys())
+        clean_tier_values = list(clean_tiers.values())
+        error_tier_values = list(error_tiers.values())
+        
+        x_tiers = np.arange(len(tier_names))
+        width_tiers = 0.35
+        
+        bars_clean = ax2.bar(x_tiers - width_tiers/2, clean_tier_values, width_tiers, 
+                           label='Limpias', color='#27ae60', alpha=0.7)
+        bars_error = ax2.bar(x_tiers + width_tiers/2, error_tier_values, width_tiers, 
+                           label='Con Errores', color='#e74c3c', alpha=0.7)
+        
+        ax2.set_title('📊 Distribución de Tiers: Limpias vs Con Errores', fontweight='bold')
+        ax2.set_ylabel('Porcentaje (%)')
+        ax2.set_xticks(x_tiers)
+        ax2.set_xticklabels([t.replace('_', ' ').title() for t in tier_names], rotation=45)
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
+        
+        plt.suptitle(f'🧪 Análisis Errores vs Limpias: {agent_name.replace("agent_", "").title()}\n' +
+                    f'Limpias: {len(clean_results)} samples | Con Errores: {len(error_results)} samples', 
+                    fontweight='bold', fontsize=14)
+        plt.tight_layout()
+        plt.savefig(output_dir / f"{agent_name}_errors_vs_clean_analysis.png", dpi=300, bbox_inches='tight')
+        plt.close()
+    
+    def _plot_difficulty_impact_analysis(self, agent_name: str, results: List[Dict], output_dir: Path):
+        """
+        PLOT ESPECÍFICO: Análisis del impacto del nivel de dificultad
+        """
+        # Agrupar por nivel de dificultad
+        difficulty_analysis = {}
+        
+        for r in results:
+            dataset_info = r.get('dataset_info', {})
+            difficulty = dataset_info.get('difficulty_level', 'unknown')
+            
+            if difficulty not in difficulty_analysis:
+                difficulty_analysis[difficulty] = {
+                    'results': [],
+                    'success_count': 0,
+                    'total_quality': 0,
+                    'total_time': 0,
+                    'error_count': 0,
+                    'clean_count': 0
+                }
+            
+            difficulty_analysis[difficulty]['results'].append(r)
+            if r.get('combined_success', False):
+                difficulty_analysis[difficulty]['success_count'] += 1
+            difficulty_analysis[difficulty]['total_quality'] += r.get('quality_score', 0)
+            difficulty_analysis[difficulty]['total_time'] += r.get('execution_time_seconds', 0)
+            
+            if dataset_info.get('has_errors', False):
+                difficulty_analysis[difficulty]['error_count'] += 1
+            else:
+                difficulty_analysis[difficulty]['clean_count'] += 1
+        
+        if len(difficulty_analysis) <= 1:
+            print(f"   ⚠️  {agent_name}: No hay suficiente variedad de dificultades")
+            return
+        
+        # Reorganizado: Solo 2 plots horizontales
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+        
+        # Ordenar dificultades
+        difficulty_order = ['facil', 'medio', 'alto']
+        difficulties = [d for d in difficulty_order if d in difficulty_analysis]
+        
+        # Plot 1: Success rate y Quality score por dificultad
+        success_rates = []
+        avg_quality = []
+        sample_counts = []
+        
+        for diff in difficulties:
+            total = len(difficulty_analysis[diff]['results'])
+            success = difficulty_analysis[diff]['success_count']
+            quality = difficulty_analysis[diff]['total_quality'] / total if total > 0 else 0
+            
+            success_rates.append(success / total if total > 0 else 0)
+            avg_quality.append(quality)
+            sample_counts.append(total)
+        
+        # Success rate bars
+        colors = ['#27ae60', '#f39c12', '#e74c3c'][:len(difficulties)]
+        x = np.arange(len(difficulties))
+        width = 0.35
+        
+        bars1 = ax1.bar(x - width/2, success_rates, width, label='Success Rate', 
+                       color=colors, alpha=0.7)
+        
+        # Quality score bars (escalado para visualización)
+        ax1_twin = ax1.twinx()
+        bars2 = ax1_twin.bar(x + width/2, avg_quality, width, label='Quality Score', 
+                            color=colors, alpha=0.5)
+        
+        ax1.set_title('📊 Success Rate y Quality Score por Dificultad', fontweight='bold')
+        ax1.set_ylabel('Success Rate', color='black', fontweight='bold')
+        ax1_twin.set_ylabel('Quality Score', color='gray', fontweight='bold')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels([d.title() for d in difficulties])
+        ax1.grid(True, alpha=0.3)
+        
+        # Añadir valores en las barras
+        for bar, rate, count in zip(bars1, success_rates, sample_counts):
+            ax1.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.02,
+                    f'{rate:.2%}\n(n={count})', ha='center', va='bottom', fontweight='bold', fontsize=9)
+        
+        for bar, quality in zip(bars2, avg_quality):
+            ax1_twin.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
+                         f'{quality:.3f}', ha='center', va='bottom', fontweight='bold', fontsize=9)
+        
+        # Plot 2: Proporción errores vs limpias por dificultad
+        error_props = []
+        clean_props = []
+        
+        for diff in difficulties:
+            total = len(difficulty_analysis[diff]['results'])
+            error_count = difficulty_analysis[diff]['error_count']
+            clean_count = difficulty_analysis[diff]['clean_count']
+            
+            error_props.append(error_count / total * 100 if total > 0 else 0)
+            clean_props.append(clean_count / total * 100 if total > 0 else 0)
+        
+        bars_clean = ax2.bar(x - width/2, clean_props, width, label='Consultas Limpias', 
+                           color='#27ae60', alpha=0.7)
+        bars_error = ax2.bar(x + width/2, error_props, width, label='Consultas con Errores', 
+                           color='#e74c3c', alpha=0.7)
+        
+        ax2.set_title('📊 Distribución Errores vs Limpias por Dificultad', fontweight='bold')
+        ax2.set_ylabel('Porcentaje (%)')
+        ax2.set_xticks(x)
+        ax2.set_xticklabels([d.title() for d in difficulties])
+        ax2.legend()
+        ax2.grid(True, alpha=0.3)
+        
+        # Añadir valores en las barras
+        for bars, values in zip([bars_clean, bars_error], [clean_props, error_props]):
+            for bar, value in zip(bars, values):
+                if value > 5:  # Solo mostrar si es significativo
+                    ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 1,
+                            f'{value:.1f}%', ha='center', va='bottom', fontweight='bold', fontsize=9)
+        
+        plt.suptitle(f'📈 Análisis de Impacto de Dificultad: {agent_name.replace("agent_", "").title()}\n' +
+                    'Cómo afecta la dificultad al rendimiento del agente', fontweight='bold', fontsize=14)
+        plt.tight_layout()
+        plt.savefig(output_dir / f"{agent_name}_difficulty_impact_analysis.png", dpi=300, bbox_inches='tight')
+        plt.close()
+    
+    def _plot_specific_error_types_analysis(self, agent_name: str, results: List[Dict], output_dir: Path):
+        """
+        PLOT ESPECÍFICO: Análisis detallado de tipos de errores específicos
+        
+        CORREGIDO: Elimina el problema del doble conteo calculando correctamente
+        el impacto de cada tipo de error de forma independiente.
+        """
+        # Separar consultas limpias vs con errores
+        clean_results = [r for r in results if not r.get('dataset_info', {}).get('has_errors', False)]
+        error_results = [r for r in results if r.get('dataset_info', {}).get('has_errors', False)]
+        
+        if not clean_results or not error_results:
+            print(f"   ⚠️  {agent_name}: No hay suficientes datos para analizar tipos de errores")
+            return
+        
+        # Calcular baseline de consultas limpias
+        baseline_success = sum(1 for r in clean_results if r.get('combined_success', False)) / len(clean_results)
+        baseline_quality = sum(r.get('quality_score', 0) for r in clean_results) / len(clean_results)
+        
+        print(f"   📊 Baseline limpio para {agent_name}: {baseline_success:.3f} success rate")
+        
+        # Definir tipos de errores a analizar
+        error_categories = {
+            'Tildes': ['tilde'],
+            'Espaciado': ['espaciado'],
+            'Ortográficos': ['ortográf', 'ortograf'],
+            'Mayúsculas': ['mayúscula', 'minúscula'],
+            'Abreviaciones': ['abreviación', 'abreviacion'],
+            'Sustituciones': ['sustitución', 'sustitucion']
+        }
+        
+        # Analizar cada tipo de error independientemente
+        error_analysis = {}
+        
+        for error_name, keywords in error_categories.items():
+            # Encontrar consultas que tienen este tipo de error específico
+            consultas_con_error = []
+            consultas_sin_error = []
+            
+            for r in error_results:
+                error_types = r.get('dataset_info', {}).get('error_types', [])
+                tiene_este_error = any(
+                    any(keyword in error_type.lower() for keyword in keywords)
+                    for error_type in error_types
+                )
+                
+                if tiene_este_error:
+                    consultas_con_error.append(r)
+                else:
+                    consultas_sin_error.append(r)
+            
+            # Solo analizar si tenemos suficientes datos
+            if len(consultas_con_error) < 5:  # Mínimo 5 consultas para ser estadísticamente relevante
+                continue
+            
+            # Calcular métricas para consultas CON este tipo de error
+            success_con_error = sum(1 for r in consultas_con_error if r.get('combined_success', False)) / len(consultas_con_error)
+            quality_con_error = sum(r.get('quality_score', 0) for r in consultas_con_error) / len(consultas_con_error)
+            
+            # Calcular métricas para consultas SIN este tipo de error (pero con otros errores)
+            success_sin_error = 0
+            quality_sin_error = 0
+            if consultas_sin_error:
+                success_sin_error = sum(1 for r in consultas_sin_error if r.get('combined_success', False)) / len(consultas_sin_error)
+                quality_sin_error = sum(r.get('quality_score', 0) for r in consultas_sin_error) / len(consultas_sin_error)
+            
+            # Calcular impactos
+            impacto_vs_baseline = (success_con_error - baseline_success) * 100
+            impacto_vs_otros_errores = (success_con_error - success_sin_error) * 100 if consultas_sin_error else 0
+            
+            error_analysis[error_name] = {
+                'count_con_error': len(consultas_con_error),
+                'count_sin_error': len(consultas_sin_error),
+                'success_con_error': success_con_error,
+                'success_sin_error': success_sin_error,
+                'quality_con_error': quality_con_error,
+                'quality_sin_error': quality_sin_error,
+                'impacto_vs_baseline': impacto_vs_baseline,
+                'impacto_vs_otros_errores': impacto_vs_otros_errores,
+                'consultas_con_error': consultas_con_error,
+                'consultas_sin_error': consultas_sin_error
+            }
+            
+            print(f"   └── {error_name}: {len(consultas_con_error)} consultas, impacto vs baseline: {impacto_vs_baseline:+.1f}%")
+        
+        if not error_analysis:
+            print(f"   ⚠️  {agent_name}: No hay suficientes tipos de errores con datos significativos")
+            return
+        
+        # Ordenar por frecuencia
+        sorted_errors = sorted(error_analysis.items(), key=lambda x: x[1]['count_con_error'], reverse=True)
+        
+        # Crear la gráfica SIN EL PIE CHART DE SEVERIDAD
+        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(18, 6))
+        
+        error_names = [name for name, _ in sorted_errors]
+        colors = plt.cm.Set3(np.linspace(0, 1, len(error_names)))
+        
+        # Plot 1: Success Rate - Con Error vs Sin Error vs Baseline
+        success_con_error = [error_analysis[name]['success_con_error'] for name in error_names]
+        success_sin_error = [error_analysis[name]['success_sin_error'] for name in error_names]
+        counts_con_error = [error_analysis[name]['count_con_error'] for name in error_names]
+        
+        x = np.arange(len(error_names))
+        width = 0.25
+        
+        bars1 = ax1.bar(x - width, success_con_error, width, label='Con este error', color='#e74c3c', alpha=0.8)
+        bars2 = ax1.bar(x, success_sin_error, width, label='Con otros errores', color='#f39c12', alpha=0.8)
+        bars3 = ax1.bar(x + width, [baseline_success] * len(error_names), width, label='Baseline limpio', color='#27ae60', alpha=0.8)
+        
+        ax1.set_title('📊 Success Rate: Impacto Específico por Tipo de Error', fontweight='bold')
+        ax1.set_ylabel('Success Rate')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(error_names, rotation=45, ha='right')
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        ax1.set_ylim(0, 1)
+        
+        # Añadir conteos en las barras
+        for bar, count in zip(bars1, counts_con_error):
+            ax1.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.02,
+                    f'n={count}', ha='center', va='bottom', fontsize=8, fontweight='bold')
+        
+        # Plot 2: Impacto vs Baseline (Degradación)
+        impactos_baseline = [error_analysis[name]['impacto_vs_baseline'] for name in error_names]
+        
+        # Colores por impacto (rojo = negativo, verde = positivo)
+        impact_colors = ['#e74c3c' if imp < 0 else '#27ae60' for imp in impactos_baseline]
+        
+        bars4 = ax2.bar(error_names, impactos_baseline, color=impact_colors, alpha=0.8)
+        ax2.set_title(f'📊 Degradación vs Baseline Limpio ({baseline_success:.1%})', fontweight='bold')
+        ax2.set_ylabel('Diferencia en Success Rate (%)')
+        ax2.tick_params(axis='x', rotation=45)
+        ax2.axhline(y=0, color='black', linestyle='--', alpha=0.5)
+        ax2.grid(True, alpha=0.3)
+        
+        for bar, imp in zip(bars4, impactos_baseline):
+            ax2.text(bar.get_x() + bar.get_width()/2., 
+                    bar.get_height() + (1 if imp >= 0 else -2),
+                    f'{imp:+.1f}%', ha='center', 
+                    va='bottom' if imp >= 0 else 'top', 
+                    fontsize=9, fontweight='bold')
+        
+        # Plot 3: Quality Score por tipo de error
+        quality_con_error = [error_analysis[name]['quality_con_error'] for name in error_names]
+        quality_sin_error = [error_analysis[name]['quality_sin_error'] for name in error_names]
+        
+        bars5 = ax3.bar(x - width/2, quality_con_error, width, label='Con este error', color='#e74c3c', alpha=0.8)
+        bars6 = ax3.bar(x + width/2, quality_sin_error, width, label='Con otros errores', color='#f39c12', alpha=0.8)
+        
+        ax3.axhline(y=baseline_quality, color='#27ae60', linestyle='--', alpha=0.8, linewidth=2, label=f'Baseline limpio ({baseline_quality:.3f})')
+        ax3.set_title('📊 Quality Score por Tipo de Error', fontweight='bold')
+        ax3.set_ylabel('Quality Score Promedio')
+        ax3.set_xticks(x)
+        ax3.set_xticklabels(error_names, rotation=45, ha='right')
+        ax3.legend()
+        ax3.grid(True, alpha=0.3)
+        
+        plt.suptitle(f'🧪 Análisis de Tipos de Errores Específicos: {agent_name.replace("agent_", "").title()}\n' +
+                    f'Análisis independiente por tipo de error sin doble conteo', 
+                    fontweight='bold', fontsize=14)
+        plt.tight_layout()
+        plt.savefig(output_dir / f"{agent_name}_specific_error_types_analysis.png", dpi=300, bbox_inches='tight')
+        plt.close()
+    
+    def _plot_error_robustness_comparison(self, output_dir: Path):
+        """
+        PLOT COMPARATIVO: Comparación de robustez ante errores entre agentes
+        """
         if not self.raw_data.get('results_by_agent'):
             return
         
-        agents = list(self.raw_data['results_by_agent'].keys())
-        if len(agents) < 2:
+        agents_robustness = {}
+        
+        for agent, results in self.raw_data['results_by_agent'].items():
+            clean_results = [r for r in results if not r.get('dataset_info', {}).get('has_errors', False)]
+            error_results = [r for r in results if r.get('dataset_info', {}).get('has_errors', False)]
+            
+            if not clean_results or not error_results:
+                continue
+            
+            clean_success = sum(1 for r in clean_results if r.get('combined_success', False)) / len(clean_results)
+            error_success = sum(1 for r in error_results if r.get('combined_success', False)) / len(error_results)
+            
+            clean_quality = sum(r.get('quality_score', 0) for r in clean_results) / len(clean_results)
+            error_quality = sum(r.get('quality_score', 0) for r in error_results) / len(error_results)
+            
+            agents_robustness[agent] = {
+                'clean_success': clean_success,
+                'error_success': error_success,
+                'success_degradation': (clean_success - error_success) * 100,
+                'clean_quality': clean_quality,
+                'error_quality': error_quality,
+                'quality_degradation': (clean_quality - error_quality) * 100,
+                'robustness_score': error_success / clean_success if clean_success > 0 else 0
+            }
+        
+        if len(agents_robustness) <= 1:
+            print("   ⚠️  No hay suficientes agentes para comparar robustez")
             return
         
-        # Extraer quality scores por agente
-        agent_scores = {}
-        for agent, results in self.raw_data['results_by_agent'].items():
-            scores = [r.get('quality_score', 0) for r in results]
-            agent_scores[agent] = scores
-        
-        # Calcular matriz de p-values (simulada con Mann-Whitney U test)
-        n_agents = len(agents)
-        p_matrix = np.ones((n_agents, n_agents))
-        effect_matrix = np.zeros((n_agents, n_agents))
-        
-        for i, agent1 in enumerate(agents):
-            for j, agent2 in enumerate(agents):
-                if i != j:
-                    scores1 = agent_scores[agent1]
-                    scores2 = agent_scores[agent2]
-                    
-                    if len(scores1) > 1 and len(scores2) > 1:
-                        try:
-                            statistic, p_value = stats.mannwhitneyu(scores1, scores2, alternative='two-sided')
-                            p_matrix[i, j] = p_value
-                            
-                            # Effect size (diferencia de medias normalizadas)
-                            mean1, mean2 = np.mean(scores1), np.mean(scores2)
-                            pooled_std = np.sqrt((np.var(scores1) + np.var(scores2)) / 2)
-                            if pooled_std > 0:
-                                effect_matrix[i, j] = (mean1 - mean2) / pooled_std
-                        except:
-                            p_matrix[i, j] = 1.0
-        
-        # Crear heatmap de significancia
+        # Reorganizado: Solo 2 plots horizontales
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
         
-        # Heatmap de p-values
+        agents = list(agents_robustness.keys())
         agent_labels = [agent.replace('agent_', '').title() for agent in agents]
-        sns.heatmap(p_matrix, annot=True, fmt='.3f', cmap='RdYlBu_r', 
-                   xticklabels=agent_labels, yticklabels=agent_labels,
-                   ax=ax1, cbar_kws={'label': 'p-value'})
-        ax1.set_title('🔬 Matriz de Significancia Estadística\n(p-values)', fontweight='bold')
         
-        # Heatmap de effect sizes
-        sns.heatmap(effect_matrix, annot=True, fmt='.2f', cmap='RdBu_r', center=0,
-                   xticklabels=agent_labels, yticklabels=agent_labels,
-                   ax=ax2, cbar_kws={'label': 'Effect Size (Cohen\'s d)'})
-        ax2.set_title('📏 Matriz de Tamaño del Efecto\n(Effect Sizes)', fontweight='bold')
+        # Plot 1: Success rate limpias vs errores
+        clean_rates = [agents_robustness[agent]['clean_success'] for agent in agents]
+        error_rates = [agents_robustness[agent]['error_success'] for agent in agents]
         
+        x = np.arange(len(agents))
+        width = 0.35
+        
+        bars1 = ax1.bar(x - width/2, clean_rates, width, label='Consultas Limpias', 
+                       color='#27ae60', alpha=0.7)
+        bars2 = ax1.bar(x + width/2, error_rates, width, label='Consultas con Errores', 
+                       color='#e74c3c', alpha=0.7)
+        
+        ax1.set_title('📊 Comparación Success Rate: Limpias vs Errores', fontweight='bold')
+        ax1.set_ylabel('Success Rate')
+        ax1.set_xticks(x)
+        ax1.set_xticklabels(agent_labels, rotation=45)
+        ax1.legend()
+        ax1.grid(True, alpha=0.3)
+        
+        # Añadir valores en las barras
+        for bars, rates in zip([bars1, bars2], [clean_rates, error_rates]):
+            for bar, rate in zip(bars, rates):
+                ax1.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.01,
+                        f'{rate:.2%}', ha='center', va='bottom', fontweight='bold', fontsize=9)
+        
+        # Plot 2: Ranking de robustez con degradación
+        robustness_scores = [agents_robustness[agent]['robustness_score'] for agent in agents]
+        degradations = [agents_robustness[agent]['success_degradation'] for agent in agents]
+        
+        # Ordenar por robustez
+        sorted_data = sorted(zip(agent_labels, robustness_scores, degradations), key=lambda x: x[1], reverse=True)
+        sorted_labels, sorted_scores, sorted_degradations = zip(*sorted_data)
+        
+        # Barras de robustez
+        colors_rank = plt.cm.RdYlGn(np.array(sorted_scores))
+        bars_rob = ax2.bar(sorted_labels, sorted_scores, color=colors_rank, alpha=0.7, label='Score de Robustez')
+        
+        # Línea de degradación en eje secundario
+        ax2_twin = ax2.twinx()
+        line_deg = ax2_twin.plot(sorted_labels, sorted_degradations, 'ro-', linewidth=2, markersize=8, 
+                                label='Degradación (%)', color='red')
+        
+        ax2.set_title('🏆 Ranking de Robustez y Degradación', fontweight='bold')
+        ax2.set_ylabel('Score de Robustez (Error/Limpio)', color='black', fontweight='bold')
+        ax2_twin.set_ylabel('Degradación (%)', color='red', fontweight='bold')
+        ax2.tick_params(axis='x', rotation=45)
+        ax2.set_ylim(0, 1.1)
+        
+        # Añadir valores en las barras
+        for bar, score in zip(bars_rob, sorted_scores):
+            ax2.text(bar.get_x() + bar.get_width()/2., bar.get_height() + 0.02,
+                    f'{score:.3f}', ha='center', va='bottom', fontweight='bold', fontsize=9)
+        
+        # Añadir valores en la línea
+        for i, (label, deg) in enumerate(zip(sorted_labels, sorted_degradations)):
+            ax2_twin.text(i, deg + 1, f'{deg:+.1f}%', ha='center', va='bottom', 
+                         fontweight='bold', fontsize=9, color='red')
+        
+        # Añadir línea de referencia
+        ax2.axhline(y=1.0, color='black', linestyle='--', alpha=0.5, label='Robustez perfecta (1.0)')
+        ax2.legend(loc='upper left')
+        ax2_twin.legend(loc='upper right')
+        
+        plt.suptitle('🛡️ Análisis Comparativo de Robustez ante Errores\n' +
+                    'Qué agentes manejan mejor las consultas con errores inyectados', 
+                    fontweight='bold', fontsize=14)
         plt.tight_layout()
-        plt.savefig(output_dir / "08_statistical_significance.png", dpi=300, bbox_inches='tight')
+        plt.savefig(output_dir / "10_error_robustness_comparison.png", dpi=300, bbox_inches='tight')
         plt.close()
-        
-        # Documentación
-        doc_text = """
-        🔬 PLOT: Significancia Estadística
-        
-        QUÉ MUESTRA:
-        Comparación estadística rigurosa entre todos los pares de agentes
-        
-        MATRIZ DE P-VALUES:
-        - Verde: Diferencias estadísticamente significativas (p < 0.05)
-        - Rojo: No hay diferencia significativa (p > 0.05)
-        - Valores en celdas: p-value exacto
-        
-        MATRIZ DE EFFECT SIZES:
-        - Azul: Agente fila es MEJOR que agente columna
-        - Rojo: Agente fila es PEOR que agente columna
-        - Intensidad = magnitud de la diferencia
-        
-        INTERPRETACIÓN:
-        - p < 0.05 AND |effect size| > 0.5 = Diferencia prácticamente significativa
-        - p > 0.05 = No hay diferencia estadística real
-        - Effect size > 0.8 = Diferencia grande
-        
-        USO EN PRESENTACIÓN:
-        - Responder: "¿Son realmente diferentes los agentes?"
-        - Evitar conclusiones erróneas por variabilidad aleatoria
-        """
-        
-        with open(output_dir / "08_statistical_significance_DOC.txt", "w") as f:
-            f.write(doc_text)
-    
-    def _plot_agent_clustering(self, agents_data: Dict, output_dir: Path):
-        """
-        PLOT COMPARATIVO 4: Clustering de agentes por similitud
-        """
-        if not ADVANCED_ANALYSIS_AVAILABLE:
-            print("   ⚠️  Clustering no disponible (falta scikit-learn)")
-            return
-            
-        agents = list(agents_data.keys())
-        if len(agents) < 2:
-            return
-        
-        # Preparar matriz de características
-        features = ['combined_success_rate', 'perfect_rate', 'average_quality_score', 
-                   'technical_success_rate', 'found_in_results_rate']
-        
-        data_matrix = []
-        for agent in agents:
-            row = []
-            for feature in features:
-                value = agents_data[agent].get(feature, 0)
-                row.append(value)
-            data_matrix.append(row)
-        
-        data_matrix = np.array(data_matrix)
-        
-        # Normalizar datos
-        scaler = StandardScaler()
-        normalized_data = scaler.fit_transform(data_matrix)
-        
-        # Clustering jerárquico
-        fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(16, 12))
-        
-        # Plot 1: Dendrogram
-        linkage_matrix = linkage(normalized_data, method='ward')
-        dendrogram(linkage_matrix, labels=[agent.replace('agent_', '').title() for agent in agents],
-                  ax=ax1, orientation='top')
-        ax1.set_title('🌲 Clustering Jerárquico de Agentes\n(Similitud en rendimiento)', fontweight='bold')
-        ax1.tick_params(axis='x', rotation=45)
-        
-        # Plot 2: K-means clustering (2D PCA)
-        if len(agents) > 2:
-            pca = PCA(n_components=2)
-            pca_data = pca.fit_transform(normalized_data)
-            
-            # K-means
-            n_clusters = min(3, len(agents))
-            kmeans = KMeans(n_clusters=n_clusters, random_state=42)
-            cluster_labels = kmeans.fit_predict(normalized_data)
-            
-            colors = plt.cm.Set1(np.linspace(0, 1, n_clusters))
-            for i, (x, y) in enumerate(pca_data):
-                ax2.scatter(x, y, c=[colors[cluster_labels[i]]], s=200, alpha=0.7)
-                ax2.annotate(agents[i].replace('agent_', '').title(), (x, y), 
-                           xytext=(5, 5), textcoords='offset points', fontweight='bold')
-            
-            ax2.set_title(f'🎯 K-Means Clustering (k={n_clusters})\nPCA 2D projection', fontweight='bold')
-            ax2.set_xlabel(f'PC1 ({pca.explained_variance_ratio_[0]:.1%} varianza)')
-            ax2.set_ylabel(f'PC2 ({pca.explained_variance_ratio_[1]:.1%} varianza)')
-            ax2.grid(True, alpha=0.3)
-        
-        # Plot 3: Matriz de distancias
-        distances = pdist(normalized_data, metric='euclidean')
-        distance_matrix = squareform(distances)
-        
-        agent_labels = [agent.replace('agent_', '').title() for agent in agents]
-        sns.heatmap(distance_matrix, annot=True, fmt='.2f', cmap='viridis',
-                   xticklabels=agent_labels, yticklabels=agent_labels, ax=ax3)
-        ax3.set_title('📏 Matriz de Distancias Euclidianas\n(0 = idénticos, mayor = más diferentes)', fontweight='bold')
-        
-        # Plot 4: Análisis de componentes principales
-        if len(features) > 2 and len(agents) > 1:
-            pca_full = PCA()
-            pca_full.fit(normalized_data)
-            
-            # El número de componentes es min(n_features, n_samples)
-            n_components = min(len(features), len(agents))
-            explained_variance = pca_full.explained_variance_ratio_[:n_components]
-            
-            ax4.bar(range(1, n_components + 1), explained_variance, 
-                   alpha=0.7, color='skyblue')
-            ax4.set_title('📊 Análisis de Componentes Principales\nVarianza explicada por componente', fontweight='bold')
-            ax4.set_xlabel('Componente Principal')
-            ax4.set_ylabel('% Varianza Explicada')
-            ax4.grid(True, alpha=0.3)
-            
-            # Añadir varianza acumulada
-            cumvar = np.cumsum(explained_variance)
-            ax4_twin = ax4.twinx()
-            ax4_twin.plot(range(1, n_components + 1), cumvar, 'ro-', color='red', linewidth=2)
-            ax4_twin.set_ylabel('% Varianza Acumulada', color='red')
-        
-        plt.suptitle('🔍 Análisis de Clustering: Agrupación por Similitud de Rendimiento\n' +
-                    'Identificar familias de agentes con comportamiento similar', fontweight='bold', fontsize=14)
-        plt.tight_layout()
-        plt.savefig(output_dir / "09_agent_clustering.png", dpi=300, bbox_inches='tight')
-        plt.close()
-        
-        # Documentación
-        doc_text = """
-        🔍 PLOT: Clustering de Agentes
-        
-        QUÉ MUESTRA:
-        Agrupación de agentes por similitud en múltiples métricas de rendimiento
-        
-        DENDROGRAM:
-        - Altura = nivel de diferencia entre agentes/grupos
-        - Ramas que se unen abajo = agentes muy similares
-        - Ramas que se unen arriba = agentes muy diferentes
-        
-        K-MEANS + PCA:
-        - Proyección 2D de datos multidimensionales
-        - Colores = clusters automáticos
-        - Distancia visual ≈ similitud real
-        
-        MATRIZ DE DISTANCIAS:
-        - 0 = agentes idénticos
-        - Valores altos = agentes muy diferentes
-        - Útil para encontrar el agente más "único"
-        
-        PCA:
-        - % varianza explicada por cada dimensión
-        - Línea roja = varianza acumulada
-        - Ayuda a entender complejidad de diferencias
-        
-        USO EN PRESENTACIÓN:
-        - "¿Qué agentes son redundantes?"
-        - "¿Hay familias de enfoques?"
-        - "¿Cuál es el agente más diferente?"
-        """
-        
-        with open(output_dir / "09_agent_clustering_DOC.txt", "w") as f:
-            f.write(doc_text)
 
 def main():
     """
@@ -1740,10 +1760,18 @@ def main():
     # Generar plots comparativos avanzados
     plotter.generate_advanced_comparison_plots()
     
+    # 🆕 NUEVO: Generar análisis específico de errores y dificultad
+    plotter.generate_error_difficulty_analysis()
+    
     print("\n✅ Análisis completo finalizado!")
     print("📁 Revisa la carpeta /plots/ para todos los gráficos y documentación")
     print("📋 Lee /plots/EXECUTIVE_SUMMARY.txt para insights principales")
     print(f"\n📊 Datos procesados desde: {plotter.results_file}")
+    print("\n🆕 NUEVAS GRÁFICAS AÑADIDAS:")
+    print("   🧪 Análisis errores vs consultas limpias por agente")
+    print("   📈 Impacto del nivel de dificultad por agente") 
+    print("   🔍 Análisis de tipos de errores específicos por agente")
+    print("   🛡️ Comparación de robustez ante errores entre agentes")
 
 if __name__ == "__main__":
     main() 
