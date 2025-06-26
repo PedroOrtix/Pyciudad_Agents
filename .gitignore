@@ -76,6 +76,8 @@ coverage.xml
 
 # Archivos de imagen PNG
 *.png
+!logo.png
+
 
 # Archivos JSON
 *.json
