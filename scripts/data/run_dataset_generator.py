@@ -8,7 +8,7 @@ import sys
 from datetime import datetime
 
 # Añadir el directorio raíz al path para importar módulos
-sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
 from data.Agent_dataset_generator.agent_dataset_generator import app_dataset_generator
 from data.Agent_dataset_generator.states_dataset import GraphStateInput

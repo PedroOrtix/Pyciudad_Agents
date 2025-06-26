@@ -1,5 +1,42 @@
-langchain
-langgraph
-langchain-ollama
-langchain-community
-pydantic
+# ========================================
+# 🚀 PyCiudad Agents - Dependencias
+# ========================================
+# Archivo consolidado con todas las dependencias del proyecto
+
+# ---- CORE: LangChain y Agentes ----
+langchain>=0.2.0
+langgraph>=0.2.0
+langchain-ollama>=0.1.0
+langchain-community>=0.2.0
+pydantic>=2.0.0
+
+# ---- EVALUATION: Sistema de Evaluación ----
+# SDK de LangGraph para conectarse al servicio local
+langgraph-sdk>=0.1.60
+
+# ---- ANALYSIS: Análisis de Datos ----
+pandas>=2.0.0
+numpy>=1.24.0
+scipy>=1.7.0
+
+# ---- VISUALIZATION: Gráficos y Plots ----
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# ---- UTILITIES: Utilidades ----
+python-dateutil>=2.8.0
+
+# ---- OPTIONAL: Dependencias Opcionales ----
+# Descomentar si necesitas funcionalidades específicas
+# requests>=2.31.0          # Para APIs externas
+# fastapi>=0.100.0          # Para crear APIs
+# uvicorn>=0.23.0           # Servidor ASGI
+# streamlit>=1.28.0         # Para dashboards interactivos
+# jupyter>=1.0.0            # Para notebooks
+# ipykernel>=6.25.0         # Kernel para Jupyter
+
+# ---- DEVELOPMENT: Solo para desarrollo ----
+# pytest>=7.4.0            # Testing
+# black>=23.0.0             # Formateo de código  
+# flake8>=6.0.0             # Linting
+# mypy>=1.5.0               # Type checking

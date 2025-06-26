@@ -99,4 +99,4 @@ Criterios para el reordenamiento (puedes ponderar según el caso):
 - Penaliza candidatos que no coincidan con los filtros geográficos o que sean de tipo inesperado.
 
 Devuelve únicamente una lista de IDs de los candidatos en el campo 'ordered_ids', en formato JSON, en el nuevo orden de relevancia. No devuelvas la lista completa de candidatos, solo los IDs.
-"""
+""" 

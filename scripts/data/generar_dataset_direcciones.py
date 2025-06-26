@@ -5,7 +5,7 @@ import random
 import time
 
 # Permitir imports relativos desde el proyecto
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 
 from agents.common.tools import search_cartociudad_tool
 from data.constantes import provincias_de_espana_por_comunidad

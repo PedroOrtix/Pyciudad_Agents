@@ -1,21 +1,16 @@
-# Dependencias para el Sistema de Evaluación de Agentes PyCiudad
+# ========================================
+# 📊 Evaluación - Dependencias Específicas
+# ========================================
 
-# SDK de LangGraph para conectarse al servicio local
-langgraph-sdk>=0.1.60
+# NOTA: Este módulo utiliza las dependencias principales del proyecto.
+# Instalar desde la raíz: pip install -r ../requirements.txt
 
-# Análisis de datos y métricas
-pandas>=2.0.0
-numpy>=1.20.0
+# ---- Solo dependencias específicas de evaluación ----
+# (Todas las dependencias están ya incluidas en requirements.txt principal)
 
-# Visualizaciones y gráficos
-matplotlib>=3.5.0
-seaborn>=0.11.0
+# Si necesitas dependencias adicionales específicas para evaluación,
+# descomenta y añade aquí:
 
-# Utilidades adicionales para análisis
-scipy>=1.7.0  # Para estadísticas avanzadas
-
-# Para procesamiento de fechas y tiempo (ya incluido en pandas, pero explícito)
-python-dateutil>=2.8.0
-
-# Para manejo de archivos y rutas (estándar en Python 3.11+)
-pathlib 
+# plotly>=5.15.0           # Para gráficos interactivos avanzados
+# dash>=2.10.0             # Para dashboards web
+# kaleido>=0.2.1           # Para exportar plotly a imágenes 

@@ -10,7 +10,7 @@ from agents.common.schemas import NormalizedQueryKeywords, CartoCiudadQuerySchem
 from agents.Agent_intention.states_intention import AgentState, GraphStateOutput, GraphStateInput
 
 # Importar prompts
-from agents.Agent_intention.prompt_intetion import KEYWORD_EXTRACTION_PROMPT, INTENT_DETECTION_PROMPT, ENRICHED_QUERY_CONSTRUCTION_PROMPT, RERANKER_PROMPT
+from agents.Agent_intention.prompt_intention import KEYWORD_EXTRACTION_PROMPT, INTENT_DETECTION_PROMPT, ENRICHED_QUERY_CONSTRUCTION_PROMPT, RERANKER_PROMPT
 
 # Importar herramienta CartoCiudad
 from agents.common.tools import search_cartociudad_tool

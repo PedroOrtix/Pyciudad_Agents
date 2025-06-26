@@ -1,5 +1,16 @@
-matplotlib>=3.7.0
-seaborn>=0.12.0
-pandas>=2.0.0
-numpy>=1.24.0
-pathlib 
+# ========================================
+# 📊 Plots - Dependencias Específicas
+# ========================================
+
+# NOTA: Este módulo utiliza las dependencias principales del proyecto.
+# Instalar desde la raíz: pip install -r ../requirements.txt
+
+# ---- Solo dependencias específicas de plots ----
+# (Todas las dependencias están ya incluidas en requirements.txt principal)
+
+# Si necesitas dependencias adicionales específicas para visualización,
+# descomenta y añade aquí:
+
+# plotly>=5.15.0           # Para gráficos interactivos
+# bokeh>=3.2.0             # Para visualizaciones web interactivas
+# altair>=5.0.0            # Para gráficos declarativos 
