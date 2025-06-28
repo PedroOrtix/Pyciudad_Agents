@@ -29,7 +29,6 @@
 - [📊 Generación de Datasets](#-generación-de-datasets)
 - [🛠️ Scripts Utilitarios](#️-scripts-utilitarios)
 - [📈 Visualización y Métricas](#-visualización-y-métricas)
-- [🤝 Contribución](#-contribución)
 - [📄 Licencia](#-licencia)
 
 ---
